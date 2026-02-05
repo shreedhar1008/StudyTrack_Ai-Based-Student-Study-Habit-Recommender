@@ -1,4 +1,4 @@
-# StudyTrack AI - Student Dropout Prediction System
+# StudyTrack AI - Student Study Hbait Recommender System
 
 A machine learning-powered web application that predicts student dropout risk and provides personalized study recommendations using AI.
 
