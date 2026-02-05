@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - StudyTrack AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #7c3aed;
+            --accent: #06b6d4;
+            --background: #0f172a;
+            --surface: rgba(30, 41, 59, 0.7);
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: var(--background);
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            height: 100vh;
+            width: 100vw;
+            max-width: none;
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        .sidebar {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid var(--glass-border);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            contain: layout;
+            transform: translateZ(0);
+        }
+
+        .main-content {
+            padding: 2.5rem;
+            overflow-y: auto;
+            max-height: 100vh;
+            contain: size layout paint;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+            font-size: 1rem;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+            will-change: opacity, transform;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .habit-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .risk-metric {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+        }
+
+        .results-container {
+            display: none;
+            margin-top: 2rem;
+        }
+
+        .improvement-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .improvement-card h4 {
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .improvement-card .tips {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .improvement-card ul {
+            margin-top: 0.5rem;
+            padding-left: 1.25rem;
+            color: var(--text-muted);
+        }
+
+        .day-cell {
+            padding: 1rem;
+            font-weight: 700;
+            color: var(--primary);
+            border-bottom: 1px solid var(--glass-border);
+            width: 120px;
+        }
+
+        .action-cell {
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .action-cell ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .white-card {
+            background: var(--surface);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            color: var(--text);
+            border-radius: 24px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .white-card h2 {
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+        }
+
+        .schedule-table th {
+            background: var(--secondary);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .schedule-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            vertical-align: top;
+            color: var(--text-muted);
+        }
+
+        .schedule-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .day-label {
+            font-weight: 700;
+            color: var(--text);
+            width: 150px;
+        }
+
+        .action-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .action-list li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .action-list li::before {
+            content: "•";
+            color: var(--accent);
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+
+        .improvement-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .technique-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .item-title {
+            color: var(--accent);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+    <style>
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            color: var(--text);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateX(100%);
+            animation: slideIn 0.3s forwards;
+            min-width: 300px;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--primary);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--danger);
+        }
+
+        @keyframes slideIn {
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideOut {
+            to {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toastContainer" class="toast-container"></div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <span style="font-size: 2rem;">🎓</span>
+                <h2 class="gradient-text" style="display: inline; margin-left: 0.5rem;">StudyTrack</h2>
+            </div>
+
+            <nav class="nav-links">
+                <button class="nav-item tab-btn active" onclick="switchTab(event, 'personal-ai-coach')">
+                    <span>🤖</span> AI Coach
+                </button>
+                <button class="nav-item tab-btn" onclick="switchTab(event, 'personalized-feedback')">
+                    <span>📈</span> Analysis & Feedback
+                </button>
+                <a href="/student/progress" class="nav-item">
+                    <span>📊</span> Performance History
+                </a>
+            </nav>
+
+            <div class="user-profile"
+                style="margin-top: auto; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+                <div class="avatar" id="userAvatar"
+                    style="width: 42px; height: 42px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                    S</div>
+                <div class="user-info">
+                    <h4 style="margin: 0; font-size: 0.9rem;" id="userName">Student</h4>
+                    <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Academic Track</p>
+                </div>
+                <button onclick="logout()"
+                    style="background: none; border: none; cursor: pointer; color: var(--danger); margin-left: auto; font-size: 1.2rem;">
+                    🚪
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Tab 1: AI Coach -->
+            <div id="personal-ai-coach" class="tab-content active">
+                <header style="margin-bottom: 2.5rem;">
+                    <h1 style="margin-bottom: 0.5rem;">Welcome Back, <span class="gradient-text"
+                            id="welcomeName">Student</span>!</h1>
+                    <p style="color: var(--text-muted);">Ready to optimize your study habits today?</p>
+                </header>
+
+                <div class="glass-card">
+                    <form id="habitForm">
+                        <div class="habit-grid">
+                            <div class="form-group">
+                                <label class="form-label">📖 Study Hours</label>
+                                <input type="number" id="studyHours" class="form-control" placeholder="e.g. 5"
+                                    step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">😴 Sleep Hours</label>
+                                <input type="number" id="sleepHours" class="form-control" placeholder="e.g. 7"
+                                    step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">📅 Attendance (%)</label>
+                                <input type="number" id="attendance" class="form-control" placeholder="0-100" min="0"
+                                    max="100" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">📱 Social Media</label>
+                                <input type="number" id="socialMedia" class="form-control" placeholder="Hours/Day"
+                                    step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">🏋️ Exercise</label>
+                                <input type="number" id="exercise" class="form-control" placeholder="Times/Week" min="0"
+                                    max="7" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">🔥 Stress (1-10)</label>
+                                <input type="range" id="stress" min="1" max="10" value="5" class="form-control"
+                                    style="padding: 0;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">🎯 Motivation (1-10)</label>
+                                <input type="range" id="motivation" min="1" max="10" value="7" class="form-control"
+                                    style="padding: 0;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">🧠 Mental Health (1-10)</label>
+                                <input type="range" id="mentalHealth" min="1" max="10" value="8" class="form-control"
+                                    style="padding: 0;">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary"
+                            style="width: 100%; padding: 1.25rem; font-size: 1.1rem;">
+                            Get My Personalized Plan 🚀
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Results Section -->
+                <div id="results" class="results-container">
+                    <div class="glass-card" style="margin-bottom: 2rem;">
+                        <h2 style="margin-bottom: 2rem;">🎯 AI Trajectory Assessment</h2>
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                            <div class="risk-metric">
+                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.5rem;">Risk
+                                    Status</p>
+                                <span id="riskBadge" class="badge">Low Risk</span>
+                            </div>
+                            <div class="risk-metric">
+                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.5rem;">Dropout
+                                    Prob.</p>
+                                <h3 id="dropoutProb" style="color: var(--danger); font-size: 2rem;">0%</h3>
+                            </div>
+                            <div class="risk-metric">
+                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.5rem;">Priority
+                                    Score</p>
+                                <h3 id="priorityScore" style="color: var(--accent); font-size: 2rem;">0/15</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 2fr 1.2fr; gap: 2rem; margin-bottom: 2rem;">
+                        <div class="glass-card">
+                            <h2 style="margin-bottom: 1.5rem;">📊 Habits vs AI Targets</h2>
+                            <div style="height: 350px;">
+                                <canvas id="metricsChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="glass-card">
+                            <h2 style="margin-bottom: 1.5rem;">📏 Quick Metrics</h2>
+                            <div id="metricsGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem;">
+                        <div class="glass-card">
+                            <h2 style="margin-bottom: 1.5rem;">💡 Smart Recommendations</h2>
+                            <ul id="recommendations"
+                                style="display: flex; flex-direction: column; gap: 1rem; padding-left: 1.25rem; color: var(--text-muted);">
+                            </ul>
+                        </div>
+                        <div class="white-card">
+                            <h2><span>📚</span> Study Techniques for You</h2>
+                            <div id="studyTechniques"
+                                style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Feedback & Analysis -->
+            <div id="personalized-feedback" class="tab-content">
+                <header style="margin-bottom: 2.5rem;">
+                    <h1 class="gradient-text">Personalized Feedback</h1>
+                    <p style="color: var(--text-muted);">In-depth insights and your optimized weekly roadmap</p>
+                </header>
+
+                <div class="white-card" style="margin-bottom: 2.5rem;">
+                    <h2><span>📅</span> Your Personalized Weekly Schedule</h2>
+                    <p style="color: #64748b; font-size: 0.9rem; margin-top: 0.5rem;">Based on your current habits and
+                        goals, here's your optimized weekly plan:</p>
+                    <div style="margin-top: 1.5rem; overflow-x: auto;">
+                        <table class="schedule-table">
+                            <thead>
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Action Plan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="weeklyScheduleBody">
+                                <tr>
+                                    <td colspan="2" style="padding: 3rem; text-align: center; color: #64748b;">Run the
+                                        AI
+                                        Coach analysis first to generate your schedule.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="white-card" style="margin-bottom: 2.5rem;">
+                    <h2><span>📈</span> Areas of Improvement</h2>
+                    <p style="color: #64748b; font-size: 0.9rem; margin-top: 0.5rem;">Based on your current habits, here
+                        are personalized tips to help you improve:</p>
+                    <div id="improvementAreas"
+                        style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <div style="grid-column: 1/-1; padding: 2rem; text-align: center; color: #64748b;">
+                            Analysis required to identify gaps.</div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h2>💬 Share your feedback</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 2rem;">How accurate was our AI coach's analysis?
+                    </p>
+
+                    <form id="feedbackFormInline">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                            <div class="form-group">
+                                <label class="form-label">Helpfulness Rating</label>
+                                <div id="starContainer"
+                                    style="font-size: 2rem; display: flex; gap: 0.5rem; cursor: pointer;">
+                                    <span class="star" onclick="setRatingInline(1)">☆</span>
+                                    <span class="star" onclick="setRatingInline(2)">☆</span>
+                                    <span class="star" onclick="setRatingInline(3)">☆</span>
+                                    <span class="star" onclick="setRatingInline(4)">☆</span>
+                                    <span class="star" onclick="setRatingInline(5)">☆</span>
+                                </div>
+                                <input type="hidden" id="feedbackRatingInline" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Improvements Observed?</label>
+                                <select id="improvementSeenInline" class="form-control" required>
+                                    <option value="">Select option...</option>
+                                    <option value="high">Significant Improvement</option>
+                                    <option value="moderate">Some Improvement</option>
+                                    <option value="none">No Change Yet</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Your Experience / Notes</label>
+                            <textarea id="feedbackTextInline" class="form-control" style="min-height: 100px;"
+                                placeholder="Tell us how we can improve..."></textarea>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem;">
+                            <input type="checkbox" id="wouldRecommendInline" checked style="width: 18px; height: 18px;">
+                            <label for="wouldRecommendInline">I'd recommend StudyTrack to peers</label>
+                        </div>
+                        <button type="submit" class="btn btn-outline"
+                            style="width: 100%; border-color: var(--primary); color: var(--primary);">Submit Feedback
+                            📨</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let currentPredictionId = null;
+        let selectedRatingInline = 0;
+
+        function switchTab(event, tabName) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            if (event) event.currentTarget.classList.add('active');
+        }
+
+        function setRatingInline(rating) {
+            selectedRatingInline = rating;
+            document.getElementById('feedbackRatingInline').value = rating;
+            document.querySelectorAll('.star').forEach((s, i) => {
+                s.textContent = i < rating ? '★' : '☆';
+                s.style.color = i < rating ? 'var(--accent)' : 'var(--text-muted)';
+            });
+        }
+
+        document.getElementById('habitForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.innerHTML = 'AI Thinking... 🧠';
+            btn.disabled = true;
+
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const data = {
+                student_id: user.student_id,
+                study_hours: parseFloat(document.getElementById('studyHours').value),
+                sleep_hours: parseFloat(document.getElementById('sleepHours').value),
+                attendance_percentage: parseFloat(document.getElementById('attendance').value),
+                social_media_hours: parseFloat(document.getElementById('socialMedia').value),
+                exercise_frequency: parseInt(document.getElementById('exercise').value),
+                stress_level: parseInt(document.getElementById('stress').value),
+                motivation_level: parseInt(document.getElementById('motivation').value),
+                mental_health_rating: parseInt(document.getElementById('mentalHealth').value),
+                // Defaults for mandatory backend features
+                time_management_score: 7, financial_stress: 0, screen_time_hours: 3, previous_gpa: 3.0,
+                exam_score: 75, assignment_completion_rate: 90
+            };
+
+            try {
+                const predRes = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const predData = await predRes.json();
+
+                const recRes = await fetch('/api/recommend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...data, cluster: predData.cluster, risk_level: predData.risk_level, dropout_probability: predData.dropout_probability })
+                });
+                const recData = await recRes.json();
+
+                displayResults(predData, recData);
+            } catch (e) {
+                console.error(e);
+                alert('Analysis failed. Please check connection.');
+            } finally {
+                btn.innerHTML = 'Get My Personalized Plan 🚀';
+                btn.disabled = false;
+            }
+        });
+
+        function displayResults(prediction, recommendations) {
+            document.getElementById('results').style.display = 'block';
+            currentPredictionId = prediction.prediction_id;
+
+            const rb = document.getElementById('riskBadge');
+            rb.textContent = prediction.risk_level;
+            rb.className = 'badge ' + (prediction.risk_level === 'High' ? 'badge-danger' : (prediction.risk_level === 'Moderate' ? 'badge-warning' : 'badge-success'));
+
+            document.getElementById('dropoutProb').textContent = (prediction.dropout_probability * 100).toFixed(1) + '%';
+            document.getElementById('priorityScore').textContent = prediction.priority_score + '/15';
+
+            const metrics = [
+                { label: 'Study', val: recommendations.current.study_hours, tar: recommendations.targets.study_hours },
+                { label: 'Sleep', val: recommendations.current.sleep_hours, tar: recommendations.targets.sleep_hours },
+                { label: 'Social', val: recommendations.current.social_media, tar: recommendations.targets.social_media },
+                { label: 'Exercise', val: recommendations.current.exercise, tar: recommendations.targets.exercise }
+            ];
+
+            const grid = document.getElementById('metricsGrid');
+            grid.innerHTML = metrics.map(m => `
+                <div class="glass" style="padding: 1rem; border-radius: 12px; text-align:center;">
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">${m.label}</div>
+                    <div style="font-weight: 700; color: var(--accent);">${m.val}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">Target: ${m.tar}</div>
+                </div>
+            `).join('');
+
+            const ctx = document.getElementById('metricsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: metrics.map(m => m.label),
+                    datasets: [
+                        { label: 'Current', data: metrics.map(m => m.val), backgroundColor: '#4f46e5', borderRadius: 4 },
+                        { label: 'Target', data: metrics.map(m => m.tar), backgroundColor: '#10b981', borderRadius: 4 }
+                    ]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } } } }
+            });
+
+            document.getElementById('recommendations').innerHTML = recommendations.recommendations.map(r => `
+                <li><strong>${r.category}:</strong> ${r.message.split('.')[0]}.</li>
+            `).join('');
+
+            document.getElementById('studyTechniques').innerHTML = (recommendations.study_techniques || []).slice(0, 3).map(t => `
+                <div class="technique-item">
+                    <div class="item-title">${t.name}</div>
+                    <p style="font-size: 0.9rem; margin-bottom: 0.5rem;">📖 <strong>What:</strong> ${t.description}</p>
+                    <p style="font-size: 0.9rem; margin-bottom: 0.5rem;">🎯 <strong>How:</strong> ${t.how_to}</p>
+                    <p style="font-size: 0.9rem;">⏰ <strong>When:</strong> ${t.frequency}</p>
+                </div>
+            `).join('');
+
+            // Background Tab Updates
+            generateWeeklySchedule(recommendations.targets);
+            generateImprovementAreas(recommendations.current, recommendations.targets);
+
+            setTimeout(() => document.getElementById('results').scrollIntoView({ behavior: 'smooth' }), 200);
+        }
+
+        function generateWeeklySchedule(targets) {
+            const body = document.getElementById('weeklyScheduleBody');
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+            body.innerHTML = days.map(day => {
+                let plan = '';
+                if (day === 'Sunday') {
+                    plan = `
+                        <li>7:30 AM: Restful wake up</li>
+                        <li>8:30-10:00 AM: Personal hobby or leisure reading</li>
+                        <li>11 AM-1 PM: Family time / Outdoor activity</li>
+                        <li>1-2 PM: Sunday Brunch/Lunch</li>
+                        <li>2-5 PM: Deep relaxation / Rest state</li>
+                        <li>6:00-8:00 PM: Weekly planning & light review</li>
+                        <li>9-10 PM: Leisure / Movie night</li>
+                        <li>10:30 PM: Early bedtime for the new week</li>
+                    `;
+                } else if (day === 'Saturday') {
+                    plan = `
+                        <li>6:30 AM: Wake up & morning routine</li>
+                        <li>6:30-8:00 AM: Quick review session</li>
+                        <li>9 AM-12 PM: Attend morning classes (Half-day)</li>
+                        <li>12-1 PM: Lunch & transition</li>
+                        <li>1-4 PM: Practical projects / Club activities</li>
+                        <li>4-6 PM: Sports or physical activity</li>
+                        <li>7:00-9:00 PM: Reflective study session</li>
+                        <li>10:00 PM: Standard bedtime</li>
+                    `;
+                } else {
+                    plan = `
+                        <li>6:30 AM: Wake up & morning routine</li>
+                        <li>6:30-8:00 AM: Morning study session</li>
+                        <li>9 AM-12 PM: Attend classes (target ${targets.attendance}%)</li>
+                        <li>12-1 PM: Lunch break</li>
+                        <li>1-4 PM: Afternoon classes/lab work</li>
+                        <li>4-5 PM: Break & light activity</li>
+                        <li>7:00-9:00 PM: Evening study session</li>
+                        <li>9-10 PM: Dinner & relaxation</li>
+                        <li>10 PM: Bedtime (8h sleep goal)</li>
+                    `;
+                }
+                return `
+                <tr>
+                    <td class="day-label">${day}</td>
+                    <td>
+                        <ul class="action-list">
+                            ${plan}
+                        </ul>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function generateImprovementAreas(current, targets) {
+            const container = document.getElementById('improvementAreas');
+            const improvements = [];
+
+            if (current.study_hours < targets.study_hours) {
+                improvements.push({
+                    icon: '📚', title: 'Study Hours',
+                    status: `Currently ${current.study_hours}h/day. Target: ${targets.study_hours}h/day`,
+                    tips: ['Use Pomodoro Technique: 25 min study, 5 min break', 'Schedule fixed study blocks', 'Find a quiet study environment', 'Start with difficult subjects first']
+                });
+            }
+
+            if (current.sleep_hours < targets.sleep_hours) {
+                improvements.push({
+                    icon: '😴', title: 'Sleep Quality',
+                    status: `Currently ${current.sleep_hours}h. Target: 7-8h`,
+                    tips: ['Set consistent bedtime/wake-up time', 'Avoid screens 1h before bed', 'Create a relaxing bedtime routine', 'Keep bedroom cool, dark & quiet']
+                });
+            }
+
+            if (current.attendance < targets.attendance) {
+                improvements.push({
+                    icon: '🎓', title: 'Class Attendance',
+                    status: `Currently ${current.attendance}%. Target: ${targets.attendance}%+`,
+                    tips: ['Set multiple alarms', 'Prepare materials the night before', 'Sit in front rows', 'Find a study buddy']
+                });
+            }
+
+            if (improvements.length === 0) {
+                container.innerHTML = `<div style="grid-column: 1/-1; padding: 2rem; text-align: center; color: #10b981;">🎉 Excellent Work! You're meeting all your targets!</div>`;
+                return;
+            }
+
+            container.innerHTML = improvements.map(area => `
+                <div class="improvement-item">
+                    <div class="item-title"><span>${area.icon}</span> ${area.title}</div>
+                    <p style="font-size: 0.9rem; margin-bottom: 1rem;"><strong>Current Status:</strong> ${area.status}</p>
+                    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); padding: 1rem; border-radius: 12px;">
+                        <div style="color: var(--success); font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem;">💡 Quick Tips to Improve:</div>
+                        <ul class="action-list" style="font-size: 0.85rem;">
+                            ${area.tips.map(tip => `<li>${tip}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('feedbackFormInline').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            await fetch('/api/feedback/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    student_id: user.student_id,
+                    prediction_id: currentPredictionId,
+                    rating: selectedRatingInline,
+                    feedback_text: document.getElementById('feedbackTextInline').value,
+                    improvement_seen: document.getElementById('improvementSeenInline').value,
+                    would_recommend: document.getElementById('wouldRecommendInline').checked ? 1 : 0
+                })
+            });
+            showToast('Feedback submitted! 🚀', 'success');
+        });
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span>${type === 'success' ? '✅' : 'ℹ️'}</span> ${message}`;
+
+            container.appendChild(toast);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s forwards';
+                toast.addEventListener('animationend', () => toast.remove());
+            }, 3000);
+        }
+
+        window.onload = () => {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (!user.student_id) window.location.href = '/login';
+            document.getElementById('welcomeName').textContent = user.fullname || user.username || 'Student';
+            document.getElementById('userName').textContent = user.fullname || user.username || 'Student';
+            document.getElementById('userAvatar').textContent = (user.fullname || user.username || 'S')[0].toUpperCase();
+        };
+
+        function logout() { localStorage.clear(); window.location.href = '/login'; }
+    </script>
+</body>
+
+</html>

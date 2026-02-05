@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - StudyTrack</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .bg-illustration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .bg-image {
+            min-width: 110vw;
+            min-height: 110vh;
+            object-fit: cover;
+            filter: blur(2px) brightness(0.8);
+            animation: kenBurns 30s ease-in-out infinite alternate;
+        }
+
+        @keyframes kenBurns {
+            0% {
+                transform: scale(1) translate(0, 0);
+            }
+
+            50% {
+                transform: scale(1.1) translate(-2%, -2%);
+            }
+
+            100% {
+                transform: scale(1.2) translate(1%, 1%);
+            }
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.85);
+            /* Slightly more opaque for readability */
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        h1.gradient-text {
+            font-size: 2.25rem !important;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .message {
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            display: none;
+            backdrop-filter: blur(8px);
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-illustration">
+        <img src="{{ url_for('static', filename='images/login_illustration.png') }}" alt="Background" class="bg-image">
+    </div>
+
+    <div class="login-card glass-card">
+        <div class="login-header">
+            <a href="/" style="text-decoration: none; display: inline-block; margin-bottom: 1rem;">
+                <span style="font-size: 2.5rem;">🎓</span>
+            </a>
+            <h1 class="gradient-text">Welcome Back</h1>
+            <p style="color: var(--text-muted);">Continue your journey to success</p>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input class="form-control" type="text" id="username" name="username" required
+                    placeholder="Enter your username">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input class="form-control" type="password" id="password" name="password" required
+                    placeholder="Enter your password">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-login" style="width: 100%; margin-top: 1rem;">
+                Login to Dashboard
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 2rem; color: var(--text-muted); font-size: 0.95rem;">
+            Don't have an account?
+            <a href="/signup" style="color: var(--accent); text-decoration: none; font-weight: 600;">Create one now</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            const btn = document.querySelector('.btn-login');
+            btn.textContent = 'Logging in...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    showMessage('Login successful! Redirecting...', 'success');
+
+                    // Store user info in localStorage
+                    localStorage.setItem('user', JSON.stringify({
+                        user_id: data.user_id,
+                        student_id: data.student_id,
+                        username: data.username,
+                        email: data.email,
+                        role: data.role,
+                        full_name: data.full_name
+                    }));
+
+                    // Redirect based on role
+                    setTimeout(() => {
+                        if (data.role === 'admin') {
+                            window.location.href = '/admin';
+                        } else {
+                            window.location.href = '/student';
+                        }
+                    }, 1000);
+                } else {
+                    showMessage(data.message, 'error');
+                    btn.textContent = 'Login';
+                    btn.disabled = false;
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('An error occurred. Please try again.', 'error');
+                btn.textContent = 'Login';
+                btn.disabled = false;
+            }
+        });
+
+        function showMessage(text, type) {
+            const msgDiv = document.getElementById('message');
+            msgDiv.textContent = text;
+            msgDiv.className = 'message ' + type;
+            msgDiv.style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>
