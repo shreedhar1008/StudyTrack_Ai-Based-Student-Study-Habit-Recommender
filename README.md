@@ -60,18 +60,6 @@ python app.py
 - Admin Dashboard: http://localhost:5000/admin
 - Login Page: http://localhost:5000/login
 
-## 👥 Default Credentials
-
-### Admin Account
-- Username: `admin`
-- Password: `admin123`
-
-### Student Account
-- Username: `student1`
-- Password: `student123`
-
-> **Note**: Passwords are now securely hashed in the database.
-
 ## 📊 Database Schema
 
 The application uses SQLite with the following tables:
