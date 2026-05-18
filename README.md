@@ -1,26 +1,20 @@
-# StudyTrack AI - Student Study Habit Recommender System
+# StudyTrack AI - Student Dropout Prediction System
 
 A machine learning-powered web application that predicts student dropout risk and provides personalized study recommendations using AI.
 
-## 📸 Demo & Screenshots
+## 📸 Screenshots & Demo
 
-**Watch the full interactive demo video:**
-![StudyTrack Demo Video](demo/demo_video.gif)
+### Application Demo
+![Demo Video](demo/demo_video.webm)
 
-<details>
-<summary><b>Click to view Screenshots</b></summary>
-<br>
-
-**Homepage**
+### Homepage
 ![Homepage](demo/homepage.png)
 
-**Student Dashboard & AI Recommendations**
+### Student Dashboard
 ![Student Dashboard](demo/student_dashboard.png)
 
-**Admin Dashboard (Students Overview)**
+### Admin Dashboard
 ![Admin Dashboard](demo/admin_dashboard.png)
-
-</details>
 
 ## 🚀 Features
 
@@ -79,6 +73,18 @@ python app.py
 - Student Dashboard: http://localhost:5000/student
 - Admin Dashboard: http://localhost:5000/admin
 - Login Page: http://localhost:5000/login
+
+## 👥 Default Credentials
+
+### Admin Account
+- Username: `admin`
+- Password: `admin123`
+
+### Student Account
+- Username: `student1`
+- Password: `student123`
+
+> **Note**: Passwords are now securely hashed in the database.
 
 ## 📊 Database Schema
 
