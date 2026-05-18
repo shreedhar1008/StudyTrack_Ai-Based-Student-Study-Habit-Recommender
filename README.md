@@ -5,7 +5,7 @@ A machine learning-powered web application that predicts student dropout risk an
 ## 📸 Demo & Screenshots
 
 **Watch the full interactive demo video:**
-![StudyTrack Demo Video](demo/demo_video.webp)
+<video src="demo/demo_video.webm" width="100%" controls autoplay loop></video>
 
 <details>
 <summary><b>Click to view Screenshots</b></summary>
