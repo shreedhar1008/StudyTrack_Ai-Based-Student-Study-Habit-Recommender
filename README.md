@@ -5,7 +5,6 @@ A machine learning-powered web application that predicts student dropout risk an
 ## 📸 Screenshots & Demo
 
 ### Application Demo
-![Demo Video](demo/demo_video.webm)
 
 ### Homepage
 ![Homepage](demo/homepage.png)
