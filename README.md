@@ -2,6 +2,26 @@
 
 A machine learning-powered web application that predicts student dropout risk and provides personalized study recommendations using AI.
 
+## 📸 Demo & Screenshots
+
+**Watch the full interactive demo video:**
+![StudyTrack Demo Video](demo/demo_video.webp)
+
+<details>
+<summary><b>Click to view Screenshots</b></summary>
+<br>
+
+**Homepage**
+![Homepage](demo/homepage.png)
+
+**Student Dashboard & AI Recommendations**
+![Student Dashboard](demo/student_dashboard.png)
+
+**Admin Dashboard (Students Overview)**
+![Admin Dashboard](demo/admin_dashboard.png)
+
+</details>
+
 ## 🚀 Features
 
 - **Dropout Risk Prediction**: ML models predict dropout probability based on student habits
