@@ -1,5 +1,11 @@
 # StudyTrack AI - Academic Intelligence & Student Retention Platform
 
+[![CI/CD Pipeline](https://github.com/shreedhar1008/StudyTrack_Ai-Based-Student-Study-Habit-Recommender/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/shreedhar1008/StudyTrack_Ai-Based-Student-Study-Habit-Recommender/actions)
+[![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.0.0-black.svg?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Render](https://img.shields.io/badge/Render-Deployed-46E3B7.svg?logo=render&logoColor=white)](https://render.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Cloud%20DB-336791.svg?logo=postgresql&logoColor=white)](https://neon.tech)
+
 An enterprise-grade, machine learning-powered academic analytics platform designed to predict student dropout risk, cultivate personalized study habits, and provide comprehensive institutional intelligence for educators.
 
 ---
