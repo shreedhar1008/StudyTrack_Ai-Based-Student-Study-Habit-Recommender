@@ -1,4 +1,4 @@
-# StudyTrack AI - Academic Intelligence & Student Retention Platform
+# StudyTrack AI - Study Habit Recommender System
 
 [![CI/CD Pipeline](https://github.com/shreedhar1008/StudyTrack_Ai-Based-Student-Study-Habit-Recommender/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/shreedhar1008/StudyTrack_Ai-Based-Student-Study-Habit-Recommender/actions)
 [![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
