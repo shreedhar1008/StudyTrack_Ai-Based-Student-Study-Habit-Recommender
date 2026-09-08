@@ -136,14 +136,5 @@ python run.py
 
 ---
 
-## 👥 Default Demo Credentials
-
-| Role | Username | Password | Access |
-|---|---|---|---|
-| **Admin** | `admin` | `admin123` | Institutional Analytics & Retraining |
-| **Student** | `student1` | `student123` | Personalized Dashboard & Habit Logging |
-
----
-
 ## 🛡️ License
 © 2026 StudyTrack AI. All rights reserved.
