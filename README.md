@@ -1,230 +1,149 @@
-# StudyTrack AI - Student Dropout Prediction System
+# StudyTrack AI - Academic Intelligence & Student Retention Platform
 
-A machine learning-powered web application that predicts student dropout risk and provides personalized study recommendations using AI.
+An enterprise-grade, machine learning-powered academic analytics platform designed to predict student dropout risk, cultivate personalized study habits, and provide comprehensive institutional intelligence for educators.
 
-## 📸 Screenshots & Demo
+---
 
-### Application Demo
-![Demo Video](demo/demo_video.webm)
+## 📸 Screenshots
 
-### Homepage
-![Homepage](demo/homepage.png)
+### 1. Landing Page
+![Homepage](docs/demo/homepage.png)
 
-### Student Dashboard
-![Student Dashboard](demo/student_dashboard.png)
+### 2. About Us Platform Architecture
+![About Us](docs/demo/about_page.png)
 
-### Admin Dashboard
-![Admin Dashboard](demo/admin_dashboard.png)
+### 3. Student Portal & Habit Tracking
+![Student Dashboard](docs/demo/student_dashboard.png)
 
-## 🚀 Features
+### 4. Student Performance Journey
+![Student Progress](docs/demo/student_progress.png)
 
-- **Dropout Risk Prediction**: ML models predict dropout probability based on student habits
-- **AI-Powered Recommendations**: Personalized study advice using Groq LLM
-- **Daily Habit Tracking**: Track study hours, sleep, attendance, and more
-- **Student Clustering**: Group students by behavior patterns
-- **Admin Dashboard**: Monitor all students and view analytics
-- **Model Retraining**: Upload new datasets and retrain models
-- **Returning User Detection**: Welcome back messages and progress tracking
-- **Feedback System**: Students can rate recommendations
+### 5. Institutional Leadership Dashboard
+![Admin Dashboard](docs/demo/admin_dashboard.png)
 
-## 📋 Prerequisites
+---
 
-- Python 3.8+
-- Groq API Key (get from https://console.groq.com/)
+## 📁 Clean & Modular Project Structure
 
-## 🛠️ Installation
-
-1. **Clone or navigate to the project directory**
-```powershell
-cd d:\NOTES\StudyTrack\STSSHR
+```
+STUDYTRACK AI/
+├── backend/
+│   ├── __init__.py
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   └── extended_routes.py    # Modular API endpoints & AI Tutor handlers
+│   ├── database/
+│   │   ├── __init__.py
+│   │   ├── adapter.py            # PostgreSQL + SQLite connection pool adapter
+│   │   ├── migrate.py            # SQLite -> PostgreSQL migration tool
+│   │   └── seed.py               # Database seeder
+│   └── services/                 # ML & AI inference services
+│       └── __init__.py
+├── frontend/
+│   ├── static/
+│   │   ├── css/
+│   │   │   └── style.css         # Responsive white-theme design system
+│   │   └── images/               # Wordmark logos, illustrations & favicons
+│   │       ├── logo.png
+│   │       ├── logo_darkbg.png
+│   │       ├── favicon.png
+│   │       └── ...
+│   └── templates/                # Responsive Jinja2 HTML templates
+│       ├── index.html
+│       ├── about.html
+│       ├── login.html
+│       ├── signup.html
+│       ├── student_dashboard.html
+│       ├── student_progress.html
+│       └── admin_dashboard.html
+├── models/                       # Pre-trained ML models & scalers
+│   ├── rf_dropout_model.pkl      # Random Forest Risk Classifier
+│   ├── kmeans_model.pkl          # K-Means Student Archetype Clusterer
+│   ├── scaler.pkl                # Standard feature scaler
+│   └── feature_columns.pkl       # 52-factor model feature definition
+├── database/                     # Local Database & Preprocessed Datasets
+│   ├── studytrack.db             # Local SQLite database (fallback)
+│   └── datasets/
+│       └── student_study_hours_preprocessed.csv
+├── uploads/                      # User-uploaded dataset storage
+│   ├── .gitkeep
+│   └── enhanced_student_habits_performance_dataset.csv
+├── docs/                         # Project media and documentation assets
+│   └── demo/
+│       ├── homepage.png
+│       ├── student_dashboard.png
+│       ├── admin_dashboard.png
+│       └── demo_video.webm
+├── app.py                        # Primary Flask backend server
+├── run.py                        # Alternative application runner
+├── requirements.txt              # Project dependencies
+├── .env.example                  # Environment configuration template
+├── .env                          # Local credentials
+├── .gitignore                    # Version control ignore rules
+├── README.md                     # Project documentation
+└── SETUP.md                      # Setup instructions
 ```
 
-2. **Create and activate virtual environment**
+---
+
+## 🚀 Key Capabilities
+
+- **Predictive Risk Modeling**: Random Forest classifier evaluating 52+ multi-dimensional behavioral factors.
+- **Cluster Personalization**: K-Means clustering assigning learners to behavioral archetypes with tailored study timetables.
+- **Daily Habit Tracking**: Interactive timeline journals, habit logging, and visual growth analytics.
+- **AI Tutoring & Insights**: Generative study recommendations and intervention strategies powered by Groq LLM.
+- **Institutional Intelligence**: Leadership dashboard featuring cohort analytics, student filters, and dynamic CSV model retraining.
+- **Dual Database Architecture**: Seamless support for Cloud PostgreSQL (Neon/Supabase) and local SQLite.
+
+---
+
+## 🛠️ Quickstart Installation
+
+1. **Activate Virtual Environment**
 ```powershell
 python -m venv .venv
-.venv\Scripts\activate
+.\.venv\Scriptsctivate
 ```
 
-3. **Install dependencies**
+2. **Install Dependencies**
 ```powershell
 pip install -r requirements.txt
 ```
 
-4. **Set up environment variables**
-
-Create a `.env` file in the project root:
+3. **Configure Environment Variables**
+Copy `.env.example` to `.env` and fill in your keys:
 ```ini
-GROQ_API_KEY=your_actual_groq_api_key_here
-FLASK_SECRET_KEY=your_random_secret_key_here
-FLASK_ENV=development
+GROQ_API_KEY=your_groq_api_key_here
+FLASK_SECRET_KEY=your_secret_key
+DATABASE_URL=postgresql://user:pass@host/dbname?sslmode=require
 ```
 
-> **Important**: Get your free Groq API key from https://console.groq.com/
-
-## 🚦 Running the Application
-
-1. **Start the Flask server**
+4. **Start the Application**
 ```powershell
 python app.py
+# or
+python run.py
 ```
 
-2. **Access the application**
-- Homepage: http://localhost:5000
-- Student Dashboard: http://localhost:5000/student
-- Admin Dashboard: http://localhost:5000/admin
-- Login Page: http://localhost:5000/login
+5. **Access Application Routes**
+- **Home**: http://localhost:5000/
+- **About Us**: http://localhost:5000/about
+- **Student Portal**: http://localhost:5000/student
+- **Student Progress**: http://localhost:5000/student/progress
+- **Admin Dashboard**: http://localhost:5000/admin
+- **Login**: http://localhost:5000/login
+- **Sign Up**: http://localhost:5000/signup
 
-## 👥 Default Credentials
+---
 
-### Admin Account
-- Username: `admin`
-- Password: `admin123`
+## 👥 Default Demo Credentials
 
-### Student Account
-- Username: `student1`
-- Password: `student123`
+| Role | Username | Password | Access |
+|---|---|---|---|
+| **Admin** | `admin` | `admin123` | Institutional Analytics & Retraining |
+| **Student** | `student1` | `student123` | Personalized Dashboard & Habit Logging |
 
-> **Note**: Passwords are now securely hashed in the database.
+---
 
-## 📊 Database Schema
-
-The application uses SQLite with the following tables:
-- `users` - User authentication
-- `students` - Student profiles
-- `daily_habits` - Daily habit logs
-- `predictions` - Dropout predictions
-- `recommendations` - AI-generated recommendations
-- `feedback` - Student feedback
-- `model_retraining_history` - Model training history (NEW)
-- `user_sessions` - Login session tracking (NEW)
-
-## 🔧 API Endpoints
-
-### Student Endpoints
-- `POST /api/predict` - Get dropout prediction and save habits
-- `POST /api/recommend` - Get AI recommendations
-- `GET /api/student/check-returning-user/<id>` - Check returning user status (NEW)
-- `POST /api/student/log-session` - Log user session (NEW)
-- `GET /api/student/progress/<id>` - Get progress over time
-- `POST /api/feedback/submit` - Submit feedback
-
-### Admin Endpoints
-- `GET /api/admin/stats` - Get dashboard statistics
-- `GET /api/admin/students` - Get all students
-- `POST /api/admin/upload-dataset` - Upload CSV for retraining
-- `POST /api/admin/retrain-models` - Retrain ML models
-- `GET /api/admin/retraining-history` - Get retraining history (NEW)
-- `POST /api/admin/save-retraining-result` - Save retraining results (NEW)
-
-### Authentication
-- `POST /api/signup` - Create new account
-- `POST /api/login` - Login
-- `POST /api/logout` - Logout
-
-## 🤖 Machine Learning Models
-
-The system uses pre-trained models located in the `models/` directory:
-- `rf_dropout_model.pkl` - Random Forest classifier for dropout prediction
-- `kmeans_model.pkl` - K-Means clustering for student grouping
-- `scaler.pkl` - Feature scaler
-- `feature_columns.pkl` - Feature definitions
-
-## 🆕 New Features
-
-### Model Retraining Tracking
-- Track every model retraining session
-- View accuracy improvements over time
-- Store dataset information and training duration
-- Admin dashboard displays retraining history
-
-### Returning User Experience
-- Automatically detect returning users
-- Show login count and habit tracking streak
-- Display personalized welcome messages
-- Prompt for new habit logs if not logged today
-
-## 🔐 Security Features
-
-✅ API keys stored in environment variables  
-✅ Password hashing using Werkzeug  
-✅ Flask secret key for session security  
-✅ .gitignore to protect sensitive data
-
-## 📁 Project Structure
-
-```
-STSSHR/
-├── app.py                 # Main Flask application
-├── new_endpoints.py       # New feature endpoints
-├── requirements.txt       # Python dependencies
-├── .env                   # Environment variables (create this)
-├── .env.example          # Environment template
-├── .gitignore            # Git ignore rules
-├── models/               # ML models
-│   ├── rf_dropout_model.pkl
-│   ├── kmeans_model.pkl
-│   ├── scaler.pkl
-│   └── feature_columns.pkl
-├── templates/            # HTML templates
-│   ├── index.html
-│   ├── login.html
-│   ├── signup.html
-│   ├── student_dashboard.html
-│   ├── admin_dashboard.html
-│   └── student_progress.html
-├── static/               # Static files (CSS/JS)
-├── uploads/              # Uploaded datasets
-└── studytrack.db         # SQLite database
-```
-
-## 🐛 Troubleshooting
-
-### "GROQ_API_KEY not found" Warning
-Make sure you've created a `.env` file with your Groq API key.
-
-### Database Errors
-Delete `studytrack.db` and restart the app to recreate the database with the correct schema.
-
-### Missing Dependencies
-Run `pip install -r requirements.txt` to install all required packages.
-
-### Port 5000 Already in Use
-Change the port in `app.py` line 1516: `app.run(debug=True, port=5001)`
-
-## 📝 Usage Guide
-
-### For Students
-1. Login or signup for an account
-2. Fill out the daily habits form with your current behaviors
-3. Submit to get your dropout risk assessment
-4. Review personalized AI recommendations
-5. Check your progress over time in the Progress page
-6. Provide feedback to help improve the system
-
-### For Administrators
-1. Login with admin credentials
-2. View all students and their risk levels
-3. Check system-wide analytics
-4. Upload new datasets (CSV format)
-5. Retrain models with new data
-6. View retraining history and model performance trends
-7. Review student feedback
-
-## 🔄 Updates in This Version
-
-- ✅ Fixed security vulnerability: API key now in environment variables
-- ✅ Added password hashing for secure authentication
-- ✅ Fixed database table references (daily_habits)
-- ✅ Created requirements.txt for easy dependency installation
-- ✅ Added .gitignore to protect sensitive data
-- ✅ NEW: Model retraining history tracking
-- ✅ NEW: Returning user detection and session management
-- ✅ Improved error handling throughout the application
-
-## 📄 License
-
-This project is for educational purposes.
-
-## 👨‍💻 Support
-
-For issues or questions, please check the code comments or error messages in the browser console (F12).
+## 🛡️ License
+© 2026 StudyTrack AI. All rights reserved.

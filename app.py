@@ -1,3 +1,11 @@
+import sys
+if sys.platform == 'win32':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 import joblib
@@ -31,216 +39,36 @@ if not GROQ_API_KEY:
     print("⚠️  WARNING: GROQ_API_KEY not found in environment variables!")
     print("Please create a .env file with your API key. See .env.example")
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+GROQ_MODEL = os.getenv('GROQ_MODEL', 'qwen/qwen3.8-27b')
 
-app = Flask(__name__)
+# Base directory for absolute paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app = Flask(
+    __name__,
+    static_folder=os.path.join(BASE_DIR, 'frontend', 'static'),
+    template_folder=os.path.join(BASE_DIR, 'frontend', 'templates')
+)
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 CORS(app)
 
 # Load ML models
+MODELS_DIR = os.path.join(BASE_DIR, 'models')
 print("Loading models...")
-rf_model = joblib.load('models/rf_dropout_model.pkl')
-kmeans_model = joblib.load('models/kmeans_model.pkl')
-scaler = joblib.load('models/scaler.pkl')
-feature_columns = joblib.load('models/feature_columns.pkl')
+rf_model = joblib.load(os.path.join(MODELS_DIR, 'rf_dropout_model.pkl'))
+kmeans_model = joblib.load(os.path.join(MODELS_DIR, 'kmeans_model.pkl'))
+scaler = joblib.load(os.path.join(MODELS_DIR, 'scaler.pkl'))
+feature_columns = joblib.load(os.path.join(MODELS_DIR, 'feature_columns.pkl'))
 print("Models loaded successfully!")
 
-# Database helper functions
-def get_db():
-    conn = sqlite3.connect('studytrack.db', timeout=30)
-    conn.row_factory = sqlite3.Row
-    # Set a busy timeout to wait for locks to be released (30 seconds)
-    conn.execute('PRAGMA busy_timeout = 30000')
-    return conn
-
-def init_db():
-    """Initialize SQLite database with all required tables (only if not exists)"""
-    conn = get_db()
-    # Enable Write-Ahead Logging only during initialization for optimal persistent settings
-    conn.execute('PRAGMA journal_mode=WAL')
-    conn.execute('PRAGMA synchronous=NORMAL')
-    cursor = conn.cursor()
-    
-    # Create tables if they don't exist
-    # (Removed early return to ensure NEW tables like admin_feedback are created)
-    
-    print("🔨 Creating database tables...")
-    
-    # Users table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            role TEXT DEFAULT 'student',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    # Students table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS students (
-            student_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            full_name TEXT NOT NULL,
-            age INTEGER,
-            gender TEXT,
-            major TEXT,
-            year INTEGER,
-            gpa REAL,
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
-    
-    # Daily habits log - NEW TABLE for daily tracking
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS daily_habits (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER,
-            log_date DATE NOT NULL,
-            study_hours REAL,
-            sleep_hours REAL,
-            attendance_percentage REAL,
-            social_media_hours REAL,
-            exercise_frequency INTEGER,
-            stress_level INTEGER,
-            motivation_level INTEGER,
-            mental_health_rating INTEGER,
-            notes TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (student_id) REFERENCES students (student_id),
-            UNIQUE(student_id, log_date)
-        )
-    ''')
-    
-    # Predictions table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS predictions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER,
-            daily_habit_id INTEGER,
-            dropout_probability REAL,
-            risk_level TEXT,
-            cluster_number INTEGER,
-            priority_score INTEGER,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (student_id) REFERENCES students (student_id),
-            FOREIGN KEY (daily_habit_id) REFERENCES daily_habits (id)
-        )
-    ''')
-    
-    # Recommendations table with daily tracking
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS recommendations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER,
-            prediction_id INTEGER,
-            daily_habit_id INTEGER,
-            category TEXT,
-            message TEXT,
-            priority TEXT,
-            status TEXT DEFAULT 'pending',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (student_id) REFERENCES students (student_id),
-            FOREIGN KEY (prediction_id) REFERENCES predictions (id),
-            FOREIGN KEY (daily_habit_id) REFERENCES daily_habits (id)
-        )
-    ''')
-    
-    # Feedback table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS feedback (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER,
-            prediction_id INTEGER,
-            rating INTEGER,
-            feedback_text TEXT,
-            improvement_seen TEXT,
-            would_recommend INTEGER,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (student_id) REFERENCES students (student_id),
-            FOREIGN KEY (prediction_id) REFERENCES predictions (id)
-        )
-    ''')
-    
-    # Legacy table for backward compatibility
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS student_habits (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER,
-            study_hours REAL,
-            sleep_hours REAL,
-            attendance_percentage REAL,
-            social_media_hours REAL,
-            exercise_frequency INTEGER,
-            stress_level INTEGER,
-            motivation_level INTEGER,
-            mental_health_rating INTEGER,
-            recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (student_id) REFERENCES students (student_id)
-        )
-    ''')
-    
-    # NEW: Admin Feedback table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS admin_feedback (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            admin_id INTEGER,
-            student_id INTEGER,
-            prediction_id INTEGER,
-            effectiveness_rating INTEGER, -- 1-5
-            prediction_accurate INTEGER, -- 1 for True, 0 for False
-            actual_performance TEXT,
-            intervention_taken TEXT,
-            feedback_text TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (admin_id) REFERENCES users (id),
-            FOREIGN KEY (student_id) REFERENCES students (student_id),
-            FOREIGN KEY (prediction_id) REFERENCES predictions (id)
-        )
-    ''')
-    
-    # NEW: User sessions table for tracking returning users
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS user_sessions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            student_id INTEGER,
-            login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_habit_log_date DATE,
-            total_logins INTEGER DEFAULT 1,
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (student_id) REFERENCES students (student_id)
-        )
-    ''')
-    
-    # Create default users with hashed passwords
-    cursor.execute('SELECT COUNT(*) FROM users')
-    if cursor.fetchone()[0] == 0:
-        # Hash default passwords
-        admin_password = generate_password_hash('admin123')
-        student_password = generate_password_hash('student123')
-        
-        cursor.execute('''
-            INSERT INTO users (id, username, email, password, role)
-            VALUES (1, 'admin', 'admin@studytrack.com', ?, 'admin')
-        ''', (admin_password,))
-        
-        cursor.execute('''
-            INSERT INTO users (id, username, email, password, role)
-            VALUES (2, 'student1', 'student1@example.com', ?, 'student')
-        ''', (student_password,))
-        
-        cursor.execute('''
-            INSERT INTO students (student_id, user_id, full_name, age, gender, major, year, gpa)
-            VALUES (1, 2, 'John Doe', 20, 'Male', 'Computer Science', 2, 3.2)
-        ''')
-        
-        print("✅ Default users created with hashed passwords")
-    
-    conn.commit()
-    conn.close()
-    print("✅ Database initialized successfully!")
+# Unified database helper functions (SQLite and PostgreSQL support)
+try:
+    from backend.database.adapter import get_db, init_db, is_postgres
+except ImportError:
+    from db_adapter import get_db, init_db, is_postgres
 
 #=====================Helper Functions=====================
 def generate_ai_recommendations(student_data, cluster_info, gap_analysis_list):
@@ -305,6 +133,9 @@ Example format:
   }}
 ]"""
 
+    if not groq_client:
+        return generate_fallback_recommendations(gap_analysis_list)
+
     try:
         # Call Groq API
         chat_completion = groq_client.chat.completions.create(
@@ -318,9 +149,9 @@ Example format:
                     "content": prompt
                 }
             ],
-            model="llama-3.3-70b-versatile",
+            model=GROQ_MODEL,
             temperature=0.7,
-            max_tokens=1500
+            max_tokens=500
         )
         
         ai_response = chat_completion.choices[0].message.content
@@ -484,11 +315,19 @@ def generate_fallback_recommendations(gap_analysis):
     recommendations = []
     
     for gap in gap_analysis:
-        if gap['gap'] > 0:
+        metric = gap['metric']
+        gap_val = gap['gap']
+        if gap_val > 0:
+            if metric.lower() in ['social media', 'social_media', 'screen time', 'stress', 'stress level']:
+                action = f"Reduce your {metric.lower()} by {gap_val:.1f} hours" if 'media' in metric.lower() or 'screen' in metric.lower() else f"Reduce your {metric.lower()} by {gap_val:.1f}"
+            else:
+                unit = " hours" if 'hour' in metric.lower() or metric.lower() in ['study', 'sleep'] else ("%" if 'attendance' in metric.lower() else "")
+                action = f"Increase your {metric.lower()} by {gap_val:.1f}{unit}"
+                
             recommendations.append({
-                'category': gap['metric'],
-                'priority': 'High' if gap['gap'] > 2 else 'Medium',
-                'message': f"Increase your {gap['metric'].lower()} by {gap['gap']:.1f} to reach optimal levels"
+                'category': metric,
+                'priority': 'High' if gap_val > 2 else 'Medium',
+                'message': f"{action} to reach optimal levels"
             })
     
     return recommendations
@@ -523,6 +362,9 @@ Choose from these evidence-based techniques:
 
 Select the 3-5 most suitable for THIS specific student."""
 
+    if not groq_client:
+        return get_default_study_techniques()
+
     try:
         chat_completion = groq_client.chat.completions.create(
             messages=[
@@ -535,9 +377,9 @@ Select the 3-5 most suitable for THIS specific student."""
                     "content": prompt
                 }
             ],
-            model="llama-3.3-70b-versatile",
+            model=GROQ_MODEL,
             temperature=0.6,
-            max_tokens=1200
+            max_tokens=400
         )
         
         ai_response = chat_completion.choices[0].message.content
@@ -684,46 +526,119 @@ def predict_dropout():
     # Get today's date
     today = datetime.now().date()
     
-    # Prepare features for Random Forest
-    features_rf = {}
+    # Extract base habits with sensible defaults
+    study_hours = float(data.get('study_hours', data.get('study_hours_per_day', 4.0)))
+    sleep_hours = float(data.get('sleep_hours', 7.0))
+    attendance = float(data.get('attendance_percentage', data.get('attendance', 80.0)))
+    social_media = float(data.get('social_media_hours', data.get('social_media', 2.0)))
+    exercise = float(data.get('exercise_frequency', data.get('exercise', 3.0)))
+    stress = float(data.get('stress_level', 5.0))
+    motivation = float(data.get('motivation_level', 5.0))
+    mental_health = float(data.get('mental_health_rating', 6.0))
+    
+    age = float(data.get('age', 20.0))
+    semester = float(data.get('semester', 3.0))
+    netflix_hours = float(data.get('netflix_hours', 1.0))
+    social_activity = float(data.get('social_activity', 4.0))
+    parental_support = float(data.get('parental_support_level', 7.0))
+    exam_anxiety = float(data.get('exam_anxiety_score', max(1.0, 10.0 - mental_health)))
+    time_mgmt = float(data.get('time_management_score', max(1.0, motivation * 0.8 + (10.0 - stress) * 0.2)))
+    
+    # K-Means clustering
+    clustering_features = np.array([[
+        study_hours,
+        sleep_hours,
+        attendance,
+        social_media,
+        exercise,
+        stress,
+        motivation
+    ]])
+    cluster = int(kmeans_model.predict(clustering_features)[0])
+    
+    # Derived engineered features matching training dataset
+    screen_time = social_media + netflix_hours
+    total_distractions = social_media + netflix_hours
+    study_to_social_ratio = study_hours / (social_media + 1.0)
+    stress_support_ratio = stress / (parental_support + 1.0)
+    work_life_balance = sleep_hours + exercise + study_hours
+    academic_engagement = (study_hours * attendance) / 100.0 * 2.0
+    sleep_deficit = 8.0 - sleep_hours
+    study_efficiency = study_hours * (time_mgmt / 2.0)
+    
+    gender = data.get('gender', 'Male')
+    major = data.get('major', 'Computer Science')
+    
+    features_rf = {
+        'student_id': float(student_id if student_id else 100000),
+        'age': age,
+        'study_hours_per_day': study_hours,
+        'social_media_hours': social_media,
+        'netflix_hours': netflix_hours,
+        'attendance_percentage': attendance,
+        'sleep_hours': sleep_hours,
+        'exercise_frequency': exercise,
+        'mental_health_rating': mental_health,
+        'semester': semester,
+        'stress_level': stress,
+        'social_activity': social_activity,
+        'screen_time': screen_time,
+        'parental_support_level': parental_support,
+        'motivation_level': motivation,
+        'exam_anxiety_score': exam_anxiety,
+        'time_management_score': time_mgmt,
+        'study_to_social_ratio': study_to_social_ratio,
+        'work_life_balance': work_life_balance,
+        'academic_engagement': academic_engagement,
+        'stress_support_ratio': stress_support_ratio,
+        'total_distractions': total_distractions,
+        'sleep_deficit': sleep_deficit,
+        'study_efficiency': study_efficiency,
+        'habit_cluster': cluster,
+        'gender_Male': 1.0 if gender == 'Male' else 0.0,
+        'gender_Other': 1.0 if gender == 'Other' else 0.0,
+        'major_Biology': 1.0 if major == 'Biology' else 0.0,
+        'major_Business': 1.0 if major == 'Business' else 0.0,
+        'major_Computer Science': 1.0 if major in ['Computer Science', None, ''] else 0.0,
+        'major_Engineering': 1.0 if major == 'Engineering' else 0.0,
+        'major_Psychology': 1.0 if major == 'Psychology' else 0.0,
+        'part_time_job_Yes': 0.0,
+        'diet_quality_Good': 1.0 if mental_health >= 6 else 0.0,
+        'diet_quality_Poor': 1.0 if mental_health < 4 else 0.0,
+        'parental_education_level_High School': 0.0,
+        'parental_education_level_Master': 0.0,
+        'parental_education_level_PhD': 0.0,
+        'parental_education_level_Some College': 1.0,
+        'internet_quality_Low': 0.0,
+        'internet_quality_Medium': 0.0,
+        'extracurricular_participation_Yes': 1.0 if exercise >= 3 else 0.0,
+        'study_environment_Co-Learning Group': 0.0,
+        'study_environment_Dorm': 0.0,
+        'study_environment_Library': 1.0 if study_hours >= 5 else 0.0,
+        'study_environment_Quiet Room': 1.0 if study_hours < 5 else 0.0,
+        'access_to_tutoring_Yes': 1.0 if study_hours >= 4 else 0.0,
+        'family_income_range_Low': 0.0,
+        'family_income_range_Medium': 1.0,
+        'learning_style_Kinesthetic': 0.0,
+        'learning_style_Reading': 1.0,
+        'learning_style_Visual': 0.0
+    }
+    
+    # Fill any remaining feature columns
     for col in feature_columns:
-        # Try exact match first
-        value = data.get(col)
-        
-        # If not found, try snake_case (e.g., 'Study Hours' -> 'study_hours')
-        if value is None:
-            snake_key = col.lower().replace(' ', '_')
-            value = data.get(snake_key)
-            
-        # Default to 0 if still not found
-        if value is None:
-            # Check for specific known mappings if generic snake_case fails
-            if 'Attendance' in col: value = data.get('attendance_percentage')
-            elif 'Social' in col and 'Media' in col: value = data.get('social_media_hours')
-            elif 'Exercise' in col: value = data.get('exercise_frequency')
-            elif 'Sleep' in col: value = data.get('sleep_hours')
-            elif 'Study' in col: value = data.get('study_hours')
-            else: value = 0
-
-        # Ensure numeric values only - convert to float, default to 0 if not numeric
-        try:
-            features_rf[col] = float(value) if value not in [None, '', 'student'] else 0
-        except (ValueError, TypeError):
-            features_rf[col] = 0
+        if col not in features_rf:
+            val = data.get(col, 0.0)
+            try:
+                features_rf[col] = float(val)
+            except (ValueError, TypeError):
+                features_rf[col] = 0.0
     
-    X_rf = pd.DataFrame([features_rf])
-    
-    # Ensure all columns are numeric before scaling
-    for col in X_rf.columns:
-        X_rf[col] = pd.to_numeric(X_rf[col], errors='coerce').fillna(0)
-    
+    X_rf = pd.DataFrame([features_rf])[feature_columns]
     X_rf_scaled = scaler.transform(X_rf)
-    
-    # Fix Scikit-learn feature names warning by converting scaled array back to DataFrame
     X_rf_scaled_df = pd.DataFrame(X_rf_scaled, columns=feature_columns)
     
     # Predict dropout probability
-    dropout_prob = rf_model.predict_proba(X_rf_scaled_df)[0][1]
+    dropout_prob = float(rf_model.predict_proba(X_rf_scaled_df)[0][1])
     dropout_prediction = "Yes" if dropout_prob > 0.5 else "No"
     
     # Determine risk level
@@ -734,18 +649,6 @@ def predict_dropout():
     else:
         risk_level = "High"
     
-    # K-Means clustering
-    clustering_features = np.array([[
-        data.get('study_hours', 0),
-        data.get('sleep_hours', 0),
-        data.get('attendance_percentage', 0),
-        data.get('social_media_hours', 0),
-        data.get('exercise_frequency', 0),
-        data.get('stress_level', 5),
-        data.get('motivation_level', 5)
-    ]])
-    
-    cluster = int(kmeans_model.predict(clustering_features)[0])
     priority_score = int(dropout_prob * 15)
     
     # Save to database
@@ -859,51 +762,36 @@ def get_analytics():
     conn = get_db()
     cursor = conn.cursor()
     
-    # Total students who have been tested
-    cursor.execute('SELECT COUNT(DISTINCT student_id) FROM predictions')
-    total_tested = cursor.fetchone()[0]
-    
-    # High priority students (priority score > 10)
+    # Aggregated Summary in a single query
     cursor.execute('''
-        SELECT COUNT(DISTINCT student_id) 
-        FROM predictions 
-        WHERE priority_score > 10
-        AND id IN (
-            SELECT MAX(id) FROM predictions GROUP BY student_id
-        )
-    ''')
-    high_priority = cursor.fetchone()[0]
-    
-    # Average dropout probability
-    cursor.execute('''
-        SELECT AVG(dropout_probability) 
+        SELECT 
+            COUNT(DISTINCT student_id),
+            COUNT(DISTINCT CASE WHEN priority_score > 10 THEN student_id END),
+            AVG(dropout_probability),
+            COUNT(*)
         FROM predictions
-        WHERE id IN (
-            SELECT MAX(id) FROM predictions GROUP BY student_id
-        )
     ''')
-    avg_dropout = cursor.fetchone()[0] or 0
+    summary_row = cursor.fetchone()
+    total_tested = summary_row[0] or 0
+    high_priority = summary_row[1] or 0
+    avg_dropout = summary_row[2] or 0
+    total_assessments = summary_row[3] or 0
     
-    # Risk distribution (latest predictions only)
+    # Risk distribution
     cursor.execute('''
         SELECT risk_level, COUNT(*) 
         FROM predictions
-        WHERE id IN (
-            SELECT MAX(id) FROM predictions GROUP BY student_id
-        )
         GROUP BY risk_level
     ''')
     risk_distribution = {}
     for row in cursor.fetchall():
         risk_distribution[row[0]] = row[1]
     
-    # Cluster distribution (latest predictions only)
+    # Cluster distribution
     cursor.execute('''
         SELECT cluster_number, COUNT(*) 
         FROM predictions
-        WHERE id IN (
-            SELECT MAX(id) FROM predictions GROUP BY student_id
-        )
+        WHERE cluster_number IS NOT NULL
         GROUP BY cluster_number
     ''')
     cluster_distribution = {}
@@ -919,7 +807,6 @@ def get_analytics():
             COUNT(*) as student_count,
             AVG(priority_score) as avg_priority
         FROM predictions
-        WHERE id IN (SELECT MAX(id) FROM predictions GROUP BY student_id)
         GROUP BY risk_level, cluster_number
         ORDER BY 
             CASE risk_level 
@@ -936,12 +823,8 @@ def get_analytics():
             'risk': row[0],
             'cluster': row[1],
             'count': row[2],
-            'avg_priority': round(row[3], 1)
+            'avg_priority': round(float(row[3] or 0), 1)
         })
-    
-    # Total assessments performed
-    cursor.execute('SELECT COUNT(*) FROM predictions')
-    total_assessments = cursor.fetchone()[0]
     
     conn.close()
     
@@ -1190,32 +1073,38 @@ def get_recommendation_history(student_id):
             LIMIT 30
         ''', (student_id,))
         
-        history = []
-        for row in cursor.fetchall():
-            daily_habit_id = row[0]
-            
-            # Get recommendations for this day
-            cursor.execute('''
-                SELECT category, message, priority, created_at
+        habit_rows = cursor.fetchall()
+        habit_ids = [r[0] for r in habit_rows if r[0] is not None]
+        recs_by_habit = {}
+        
+        if habit_ids:
+            placeholders = ','.join(['?'] * len(habit_ids))
+            cursor.execute(f'''
+                SELECT daily_habit_id, category, message, priority, created_at
                 FROM recommendations
-                WHERE daily_habit_id = ?
+                WHERE daily_habit_id IN ({placeholders})
                 ORDER BY 
                     CASE priority 
                         WHEN 'High' THEN 1
                         WHEN 'Medium' THEN 2
                         ELSE 3
                     END
-            ''', (daily_habit_id,))
-            
-            recommendations = []
+            ''', tuple(habit_ids))
             for rec_row in cursor.fetchall():
-                recommendations.append({
-                    'category': rec_row[0],
-                    'message': rec_row[1],
-                    'priority': rec_row[2],
-                    'time': rec_row[3]
+                dh_id = rec_row[0]
+                if dh_id not in recs_by_habit:
+                    recs_by_habit[dh_id] = []
+                recs_by_habit[dh_id].append({
+                    'category': rec_row[1],
+                    'message': rec_row[2],
+                    'priority': rec_row[3],
+                    'time': rec_row[4]
                 })
-            
+        
+        history = []
+        for row in habit_rows:
+            daily_habit_id = row[0]
+            recommendations = recs_by_habit.get(daily_habit_id, [])
             history.append({
                 'date': row[1],
                 'habits': {
@@ -1317,6 +1206,7 @@ def get_all_students():
                 FROM predictions
             ) p ON s.student_id = p.student_id AND p.rn = 1
             ORDER BY p.priority_score DESC, s.student_id
+            LIMIT 200
         ''')
         
         students = []
@@ -1936,6 +1826,7 @@ def signup():
             'user_id': user_id,
             'student_id': student_id,
             'username': username,
+            'full_name': full_name,
             'role': 'student'
         })
         
@@ -1957,19 +1848,28 @@ def login():
     conn = get_db()
     cursor = conn.cursor()
     
-    # Get user with password hash
+    # Get user with password hash (supports logging in with username OR email)
     cursor.execute('''
         SELECT u.id, u.username, u.email, u.password, u.role, s.student_id, s.full_name
         FROM users u
         LEFT JOIN students s ON u.id = s.user_id
-        WHERE u.username = ?
-    ''', (username,))
+        WHERE u.username = ? OR u.email = ?
+        LIMIT 1
+    ''', (username, username))
     
     user = cursor.fetchone()
     conn.close()
     
     if not user or not check_password_hash(user[3], password):
         return jsonify({'status': 'error', 'message': 'Invalid username or password'}), 401
+    
+    # Clean display name (ensure real name rather than raw email string)
+    full_name = user[6]
+    if not full_name or '@' in str(full_name):
+        raw = user[6] if (user[6] and '@' not in str(user[6])) else (user[1] or user[2])
+        if '@' in raw:
+            raw = raw.split('@')[0]
+        full_name = raw.replace('.', ' ').replace('_', ' ').title()
     
     return jsonify({
         'status': 'success',
@@ -1979,7 +1879,7 @@ def login():
         'email': user[2],
         'role': user[4],
         'student_id': user[5],
-        'full_name': user[6]
+        'full_name': full_name
     })
 
 
@@ -2000,7 +1900,23 @@ def signup_page():
 def student_progress():
     return render_template('student_progress.html')
 
+@app.route('/about')
+def about_page():
+    return render_template('about.html')
 
+
+# Import and register extended features
+try:
+    from backend.routes.extended_routes import register_new_endpoints
+    register_new_endpoints(app, get_db, jsonify, datetime, generate_password_hash)
+    print("✅ Extended endpoints registered successfully!")
+except ImportError:
+    try:
+        from new_endpoints import register_new_endpoints
+        register_new_endpoints(app, get_db, jsonify, datetime, generate_password_hash)
+        print("✅ Extended endpoints registered successfully!")
+    except ImportError as e:
+        print(f"⚠️  Extended endpoints not loaded: {e}")
 
 if __name__ == '__main__':
     print("=" * 50)

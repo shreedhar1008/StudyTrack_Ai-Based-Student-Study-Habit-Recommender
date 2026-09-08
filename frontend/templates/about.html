@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="msapplication-navbutton-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="color-scheme" content="light">
+    <title>About Us - StudyTrack AI</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* ==========================================================================
+           About Page Premium Full-Width Theme
+           ========================================================================== */
+        
+        body {
+            background-color: #f8fafc;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        main {
+            flex: 1;
+            width: 100%;
+        }
+
+        .about-hero-wrapper {
+            position: relative;
+            width: 100%;
+            background: radial-gradient(circle at 50% 10%, rgba(99, 102, 241, 0.09) 0%, rgba(248, 250, 252, 0) 70%), #f8fafc;
+            border-bottom: 1px solid var(--border);
+            padding: clamp(3.5rem, 7vw, 6rem) clamp(1.25rem, 6vw, 8%) clamp(2.5rem, 5vw, 4.5rem);
+            text-align: center;
+        }
+
+        .hero-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 1.15rem;
+            background: #ffffff;
+            border: 1px solid var(--primary-border);
+            border-radius: var(--radius-full);
+            color: var(--primary);
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.4); opacity: 0.3; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .about-hero-title {
+            font-size: clamp(2.25rem, 5.5vw, 3.85rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 1.25rem;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+        }
+
+        .about-hero-subtitle {
+            font-size: clamp(1.05rem, 2vw, 1.25rem);
+            color: var(--text-muted);
+            line-height: 1.65;
+            max-width: 860px;
+            margin: 0 auto 2.5rem;
+        }
+
+        /* Stats Strip */
+        .stats-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            max-width: 1050px;
+            margin: 0 auto;
+        }
+
+        .stat-box {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 1.5rem 1rem;
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+        }
+
+        .stat-box-val {
+            font-size: clamp(1.75rem, 3.5vw, 2.35rem);
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-box-lbl {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* Content Sections */
+        .fullwidth-section {
+            width: 100%;
+            max-width: 1360px;
+            margin: 0 auto;
+            padding: clamp(3rem, 6vw, 5rem) clamp(1.25rem, 6vw, 8%);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: clamp(2rem, 4vw, 3.5rem);
+        }
+
+        .section-title {
+            font-size: clamp(1.85rem, 4vw, 2.5rem);
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-subtitle {
+            font-size: clamp(0.95rem, 1.8vw, 1.1rem);
+            color: var(--text-muted);
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        /* 4-Column Balanced Grid for Platform Pillars */
+        .pillars-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        .pillar-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 2rem 1.5rem;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .pillar-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-border);
+        }
+
+        .pillar-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: var(--primary-light);
+            border: 1px solid var(--primary-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .pillar-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            line-height: 1.3;
+        }
+
+        .pillar-desc {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.6;
+            margin-bottom: 1.25rem;
+        }
+
+        .pillar-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .pillar-tag {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.65rem;
+            border-radius: var(--radius-full);
+            background: var(--surface-subtle);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        /* System Architecture & Workflow Dual Grid */
+        .workflow-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            width: 100%;
+        }
+
+        .arch-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 2.25rem clamp(1.25rem, 3vw, 2rem);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .flow-step {
+            display: flex;
+            gap: 1.25rem;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .flow-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .flow-num {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #ffffff;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+        }
+
+        .tech-badge-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.25rem;
+        }
+
+        .tech-box {
+            padding: 1.15rem 1rem;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            text-align: center;
+        }
+
+        /* Developers / Team Members Grid (Symmetrical 4 Columns on Desktop) */
+        .team-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.75rem;
+            width: 100%;
+        }
+
+        .dev-profile-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 2.25rem 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .dev-profile-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .dev-tag {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 0.3rem 0.85rem;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: var(--radius-full);
+            margin-bottom: 1.25rem;
+            border: 1px solid var(--primary-border);
+        }
+
+        .dev-avatar-ring {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--surface-subtle) 0%, #ffffff 100%);
+            border: 2px dashed var(--border);
+            margin: 0 auto 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            color: var(--text-muted);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .dev-profile-card:hover .dev-avatar-ring {
+            border-color: var(--primary);
+            border-style: solid;
+            transform: scale(1.06);
+        }
+
+        .dev-name {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.35rem;
+        }
+
+        .dev-role {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1.25rem;
+        }
+
+        .dev-placeholder-pill {
+            display: inline-block;
+            padding: 0.4rem 0.85rem;
+            background: var(--surface-subtle);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-md);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            width: 100%;
+            margin-bottom: 0.4rem;
+        }
+
+        /* Footer */
+        .footer-premium {
+            width: 100%;
+            background: #0f172a;
+            border-top: 1px solid #1e293b;
+            padding: clamp(2.25rem, 4vw, 3.25rem) clamp(1.25rem, 6vw, 8%);
+            color: #94a3b8;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            margin-top: auto;
+        }
+
+        .footer-inner {
+            max-width: 1360px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.25rem;
+        }
+
+        /* ==========================================================================
+           Breakpoints & Responsive Rules
+           ========================================================================== */
+        @media (max-width: 1100px) {
+            .pillars-grid-4,
+            .team-grid-4 {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 1.25rem;
+            }
+            .stats-strip {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .workflow-grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .pillars-grid-4,
+            .team-grid-4,
+            .stats-strip {
+                grid-template-columns: 1fr !important;
+            }
+            .tech-badge-grid {
+                grid-template-columns: 1fr;
+            }
+            .about-hero-wrapper {
+                padding-top: 2.5rem;
+                padding-bottom: 2rem;
+            }
+            .footer-inner {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Navbar -->
+    <nav class="navbar">
+        <a href="/" class="logo" style="display: flex; align-items: center;">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="StudyTrack AI" style="height: 38px; width: auto; max-width: 190px; object-fit: contain;">
+        </a>
+        <div class="nav-actions">
+            <a href="/" class="btn btn-outline" style="border: none; background: transparent; color: var(--text-primary); font-weight: 600;">Home</a>
+            <a href="/about" class="btn btn-outline" style="border: 1px solid var(--primary-border); background: var(--primary-light); color: var(--primary); font-weight: 700;">About</a>
+            <a href="/login" class="btn btn-outline">Login</a>
+            <a href="/signup" class="btn btn-primary">Sign Up</a>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Full-Width Hero Section -->
+        <section class="about-hero-wrapper">
+            <div class="hero-inner">
+                <div class="badge-pill">
+                    <span class="pulse-dot"></span>
+                    <span>Academic Intelligence & Student Retention Platform</span>
+                </div>
+                <h1 class="about-hero-title">
+                    Empowering Student Success Through <span class="gradient-text">Predictive AI</span>
+                </h1>
+                <p class="about-hero-subtitle">
+                    StudyTrack AI is an enterprise-grade academic trajectory system designed to proactively detect dropout risks, cultivate lifelong study habits, and supply educators with real-time institutional analytics.
+                </p>
+
+                <!-- High-Impact Key Metrics Strip -->
+                <div class="stats-strip">
+                    <div class="stat-box">
+                        <div class="stat-box-val">52+</div>
+                        <div class="stat-box-lbl">Behavioral Factors</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-val">Dual-ML</div>
+                        <div class="stat-box-lbl">Classification & Clusters</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-val">Real-Time</div>
+                        <div class="stat-box-lbl">Early Risk Prediction</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-val">100%</div>
+                        <div class="stat-box-lbl">Tailored Schedules</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Platform Architecture Pillars (Symmetrical 4-Card Grid) -->
+        <section class="fullwidth-section">
+            <div class="section-header">
+                <h2 class="section-title">Platform Architecture & Capabilities</h2>
+                <p class="section-subtitle">How StudyTrack AI leverages artificial intelligence to revolutionize academic outcomes</p>
+            </div>
+
+            <div class="pillars-grid-4">
+                <!-- Pillar 1 -->
+                <div class="pillar-card">
+                    <div>
+                        <div class="pillar-icon">🎯</div>
+                        <h3 class="pillar-title">Predictive Risk Modeling</h3>
+                        <p class="pillar-desc">
+                            High-accuracy Random Forest classifier continuously evaluates multi-dimensional academic metrics, attendance, stress, and lifestyle habits to compute real-time dropout risk and priority scores.
+                        </p>
+                    </div>
+                    <div class="pillar-tags">
+                        <span class="pillar-tag">Random Forest</span>
+                        <span class="pillar-tag">Risk Scoring</span>
+                        <span class="pillar-tag">Priority Engine</span>
+                    </div>
+                </div>
+
+                <!-- Pillar 2 -->
+                <div class="pillar-card">
+                    <div>
+                        <div class="pillar-icon">🧠</div>
+                        <h3 class="pillar-title">Cluster Personalization</h3>
+                        <p class="pillar-desc">
+                            Unsupervised K-Means clustering groups learners into behavioral archetypes. Generates custom study timetables, ideal target adjustments, and tailored study techniques (Pomodoro, Feynman, Spaced Repetition).
+                        </p>
+                    </div>
+                    <div class="pillar-tags">
+                        <span class="pillar-tag">K-Means</span>
+                        <span class="pillar-tag">Archetypes</span>
+                        <span class="pillar-tag">Smart Timetables</span>
+                    </div>
+                </div>
+
+                <!-- Pillar 3 -->
+                <div class="pillar-card">
+                    <div>
+                        <div class="pillar-icon">📈</div>
+                        <h3 class="pillar-title">Habit & Growth Tracking</h3>
+                        <p class="pillar-desc">
+                            Interactive student portal features daily productivity logging, timeline journals, and visual growth charts to empower students with continuous feedback and sustainable behavioral transformation.
+                        </p>
+                    </div>
+                    <div class="pillar-tags">
+                        <span class="pillar-tag">Daily Logging</span>
+                        <span class="pillar-tag">Growth Charts</span>
+                        <span class="pillar-tag">Timeline Feed</span>
+                    </div>
+                </div>
+
+                <!-- Pillar 4 -->
+                <div class="pillar-card">
+                    <div>
+                        <div class="pillar-icon">🛡️</div>
+                        <h3 class="pillar-title">Institutional Intelligence</h3>
+                        <p class="pillar-desc">
+                            Academic leadership dashboard providing cohort risk distributions, dynamic CSV dataset ingestion, student search filters, user feedback tracking, and on-demand machine learning model optimization.
+                        </p>
+                    </div>
+                    <div class="pillar-tags">
+                        <span class="pillar-tag">Admin Analytics</span>
+                        <span class="pillar-tag">Dataset Ingestion</span>
+                        <span class="pillar-tag">Model Retraining</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- System Architecture & Tech Stack (Full-Width Dual Grid) -->
+        <section class="fullwidth-section" style="padding-top: 0;">
+            <div class="workflow-grid-2">
+                <!-- Left Card: Pipeline Workflow -->
+                <div class="arch-card">
+                    <h3 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 1.5rem; color: var(--text-primary);">
+                        🔄 End-to-End System Pipeline
+                    </h3>
+                    
+                    <div class="flow-step">
+                        <div class="flow-num">1</div>
+                        <div>
+                            <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">Multi-Factor Data Ingestion</h4>
+                            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;">Collects attendance, GPA, study hours, sleep regularity, and psychological stress inputs.</p>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-num">2</div>
+                        <div>
+                            <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">Feature Scaling & Machine Learning</h4>
+                            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;">Robust preprocessing pipeline standardizes data into high-dimensional Random Forest & K-Means tensors.</p>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-num">3</div>
+                        <div>
+                            <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">Actionable Recommendation Engine</h4>
+                            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;">Generates customized weekly study schedules and target habit recommendations tailored to each student.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Card: Technology Stack -->
+                <div class="arch-card">
+                    <h3 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 1.5rem; color: var(--text-primary);">
+                        ⚙️ Enterprise Technology Stack
+                    </h3>
+                    
+                    <div class="tech-badge-grid">
+                        <div class="tech-box">
+                            <div style="font-size: 1.75rem; margin-bottom: 0.35rem;">🤖</div>
+                            <div style="font-weight: 800; color: var(--text-primary); font-size: 0.95rem;">Machine Learning</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Scikit-Learn (RF & KMeans)</div>
+                        </div>
+
+                        <div class="tech-box">
+                            <div style="font-size: 1.75rem; margin-bottom: 0.35rem;">⚡</div>
+                            <div style="font-weight: 800; color: var(--text-primary); font-size: 0.95rem;">Backend Engine</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Python Flask REST APIs</div>
+                        </div>
+
+                        <div class="tech-box">
+                            <div style="font-size: 1.75rem; margin-bottom: 0.35rem;">☁️</div>
+                            <div style="font-weight: 800; color: var(--text-primary); font-size: 0.95rem;">Database Layer</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Cloud PostgreSQL & Pooling</div>
+                        </div>
+
+                        <div class="tech-box">
+                            <div style="font-size: 1.75rem; margin-bottom: 0.35rem;">📊</div>
+                            <div style="font-weight: 800; color: var(--text-primary); font-size: 0.95rem;">Visual Analytics</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Chart.js & Responsive CSS3</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.5rem; padding: 0.85rem 1rem; background: var(--primary-light); border: 1px solid var(--primary-border); border-radius: var(--radius-lg); display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="font-size: 1.25rem;">🔒</span>
+                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary);">Secure TLS Connection & SCRAM Encrypted Access</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Project Team Section (4 Group Members Blank Symmetrical Profiles) -->
+        <section class="fullwidth-section" style="padding-top: 0;">
+            <div class="section-header">
+                <h2 class="section-title">👥 Project Team</h2>
+                <p class="section-subtitle">Collaborative academic project developed by a 4-member engineering team</p>
+            </div>
+
+            <div class="team-grid-4">
+                <!-- Member 1 Blank Card -->
+                <div class="dev-profile-card">
+                    <div class="dev-tag">Team Member 01</div>
+                    <div class="dev-avatar-ring">
+                        <span>👤</span>
+                    </div>
+                    <h3 class="dev-name">Member 1</h3>
+                    <div class="dev-role">Developer / Contributor</div>
+                    <div class="dev-placeholder-pill">• Name Details Pending •</div>
+                    <div class="dev-placeholder-pill">• Module / Role Pending •</div>
+                </div>
+
+                <!-- Member 2 Blank Card -->
+                <div class="dev-profile-card">
+                    <div class="dev-tag">Team Member 02</div>
+                    <div class="dev-avatar-ring">
+                        <span>👤</span>
+                    </div>
+                    <h3 class="dev-name">Member 2</h3>
+                    <div class="dev-role">Developer / Contributor</div>
+                    <div class="dev-placeholder-pill">• Name Details Pending •</div>
+                    <div class="dev-placeholder-pill">• Module / Role Pending •</div>
+                </div>
+
+                <!-- Member 3 Blank Card -->
+                <div class="dev-profile-card">
+                    <div class="dev-tag">Team Member 03</div>
+                    <div class="dev-avatar-ring">
+                        <span>👤</span>
+                    </div>
+                    <h3 class="dev-name">Member 3</h3>
+                    <div class="dev-role">Developer / Contributor</div>
+                    <div class="dev-placeholder-pill">• Name Details Pending •</div>
+                    <div class="dev-placeholder-pill">• Module / Role Pending •</div>
+                </div>
+
+                <!-- Member 4 Blank Card -->
+                <div class="dev-profile-card">
+                    <div class="dev-tag">Team Member 04</div>
+                    <div class="dev-avatar-ring">
+                        <span>👤</span>
+                    </div>
+                    <h3 class="dev-name">Member 4</h3>
+                    <div class="dev-role">Developer / Contributor</div>
+                    <div class="dev-placeholder-pill">• Name Details Pending •</div>
+                    <div class="dev-placeholder-pill">• Module / Role Pending •</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Full-Width Premium Clean Dark Footer -->
+    <footer class="footer-premium">
+        <div class="footer-inner">
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <img src="{{ url_for('static', filename='images/logo_darkbg.png') }}" alt="StudyTrack AI" style="height: 32px; width: auto; object-fit: contain;">
+            </div>
+            <div style="display: flex; gap: 1.75rem; flex-wrap: wrap; align-items: center;">
+                <a href="/" style="color: #94a3b8; text-decoration: none; font-size: 0.92rem; font-weight: 600; transition: color 0.2s ease;">Home</a>
+                <a href="/about" style="color: #ffffff; text-decoration: none; font-size: 0.92rem; font-weight: 700;">About</a>
+                <a href="/login" style="color: #94a3b8; text-decoration: none; font-size: 0.92rem; font-weight: 600; transition: color 0.2s ease;">Login</a>
+                <a href="/signup" style="color: #94a3b8; text-decoration: none; font-size: 0.92rem; font-weight: 600; transition: color 0.2s ease;">Sign Up</a>
+                <a href="/student" style="color: #94a3b8; text-decoration: none; font-size: 0.92rem; font-weight: 600; transition: color 0.2s ease;">Student Portal</a>
+                <a href="/admin" style="color: #94a3b8; text-decoration: none; font-size: 0.92rem; font-weight: 600; transition: color 0.2s ease;">Admin Dashboard</a>
+            </div>
+            <div style="font-size: 0.88rem; color: #64748b;">
+                © 2026 StudyTrack AI. All rights reserved.
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

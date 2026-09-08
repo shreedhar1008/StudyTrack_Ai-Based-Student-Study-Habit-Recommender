@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="msapplication-navbutton-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="color-scheme" content="light">
+    <title>Login - StudyTrack</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: clamp(1rem, 4vw, 2rem);
+            background: #f8fafc;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            padding: clamp(1.75rem, 5vw, 2.5rem);
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .message {
+            padding: 0.85rem 1rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1.25rem;
+            font-size: 0.9rem;
+            display: none;
+            font-weight: 600;
+        }
+
+        .message.success {
+            background: var(--success-light);
+            color: var(--success-dark);
+            border: 1px solid var(--success);
+        }
+
+        .message.error {
+            background: var(--danger-light);
+            color: var(--danger-dark);
+            border: 1px solid var(--danger);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-card">
+        <div class="login-header">
+            <a href="/" style="text-decoration: none; display: inline-block; margin-bottom: 0.85rem;">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="StudyTrack AI" style="height: 48px; width: auto; max-width: 220px; object-fit: contain;">
+            </a>
+            <h1 class="gradient-text" style="font-size: 1.85rem; margin-bottom: 0.4rem;">Welcome Back</h1>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Continue your journey to success</p>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input class="form-control" type="text" id="username" name="username" required
+                    placeholder="Enter your username" autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input class="form-control" type="password" id="password" name="password" required
+                    placeholder="Enter your password" autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-login" style="width: 100%; margin-top: 1rem; padding: 0.9rem;">
+                Login to Dashboard 🚀
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.75rem; color: var(--text-muted); font-size: 0.9rem;">
+            Don't have an account?
+            <a href="/signup" style="color: var(--primary); text-decoration: none; font-weight: 700;">Create one now</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            const btn = document.querySelector('.btn-login');
+            btn.textContent = 'Logging in...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    showMessage('Login successful! Redirecting...', 'success');
+
+                    localStorage.setItem('user', JSON.stringify({
+                        user_id: data.user_id,
+                        student_id: data.student_id,
+                        username: data.username,
+                        email: data.email,
+                        role: data.role,
+                        full_name: data.full_name
+                    }));
+
+                    setTimeout(() => {
+                        if (data.role === 'admin') {
+                            window.location.href = '/admin';
+                        } else {
+                            window.location.href = '/student';
+                        }
+                    }, 100);
+                } else {
+                    showMessage(data.message, 'error');
+                    btn.textContent = 'Login to Dashboard 🚀';
+                    btn.disabled = false;
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('An error occurred. Please try again.', 'error');
+                btn.textContent = 'Login to Dashboard 🚀';
+                btn.disabled = false;
+            }
+        });
+
+        function showMessage(text, type) {
+            const msgDiv = document.getElementById('message');
+            msgDiv.textContent = text;
+            msgDiv.className = 'message ' + type;
+            msgDiv.style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>
