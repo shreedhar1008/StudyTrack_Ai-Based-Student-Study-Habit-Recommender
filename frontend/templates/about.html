@@ -315,51 +315,46 @@
         }
 
         .dev-avatar-ring {
-            width: 88px;
-            height: 88px;
+            width: 84px;
+            height: 84px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--surface-subtle) 0%, #ffffff 100%);
-            border: 2px dashed var(--border);
+            background: linear-gradient(135deg, var(--primary-light) 0%, #ffffff 100%);
+            border: 2px solid var(--primary-border);
             margin: 0 auto 1.25rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.2rem;
-            color: var(--text-muted);
-            transition: transform 0.2s ease, border-color 0.2s ease;
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--primary);
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
         }
 
         .dev-profile-card:hover .dev-avatar-ring {
             border-color: var(--primary);
-            border-style: solid;
-            transform: scale(1.06);
+            transform: scale(1.08);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.15);
         }
 
         .dev-name {
-            font-size: 1.25rem;
+            font-size: 1.35rem;
             font-weight: 800;
             color: var(--text-primary);
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.45rem;
         }
 
         .dev-role {
-            font-size: 0.88rem;
+            font-size: 0.95rem;
             font-weight: 700;
             color: var(--primary);
-            margin-bottom: 1.25rem;
+            margin-bottom: 0.2rem;
         }
 
-        .dev-placeholder-pill {
-            display: inline-block;
-            padding: 0.4rem 0.85rem;
-            background: var(--surface-subtle);
-            border: 1px dashed var(--border);
-            border-radius: var(--radius-md);
-            font-size: 0.8rem;
-            color: var(--text-muted);
+        .dev-subrole {
+            font-size: 0.88rem;
             font-weight: 600;
-            width: 100%;
-            margin-bottom: 0.4rem;
+            color: var(--text-muted);
         }
 
         /* Footer */
@@ -622,7 +617,7 @@
             </div>
         </section>
 
-        <!-- Project Team Section (4 Group Members Blank Symmetrical Profiles) -->
+        <!-- Project Team Section (4 Engineering Team Members) -->
         <section class="fullwidth-section" style="padding-top: 0;">
             <div class="section-header">
                 <h2 class="section-title">👥 Project Team</h2>
@@ -630,52 +625,45 @@
             </div>
 
             <div class="team-grid-4">
-                <!-- Member 1 Blank Card -->
+                <!-- Member 1: Shreedhar -->
                 <div class="dev-profile-card">
-                    <div class="dev-tag">Team Member 01</div>
-                    <div class="dev-avatar-ring">
-                        <span>👤</span>
+                    <div class="dev-tag" style="background: rgba(79, 70, 229, 0.12); color: var(--primary); border-color: rgba(79, 70, 229, 0.3);">Team Lead</div>
+                    <div class="dev-avatar-ring" style="background: linear-gradient(135deg, #e0e7ff 0%, #ffffff 100%); color: #4338ca; border-color: #c7d2fe;">
+                        <span>S</span>
                     </div>
-                    <h3 class="dev-name">Member 1</h3>
-                    <div class="dev-role">Developer / Contributor</div>
-                    <div class="dev-placeholder-pill">• Name Details Pending •</div>
-                    <div class="dev-placeholder-pill">• Module / Role Pending •</div>
+                    <h3 class="dev-name">Shreedhar</h3>
+                    <div class="dev-role">Team Lead</div>
+                    <div class="dev-subrole">Developer</div>
                 </div>
 
-                <!-- Member 2 Blank Card -->
+                <!-- Member 2: Labangi -->
                 <div class="dev-profile-card">
-                    <div class="dev-tag">Team Member 02</div>
-                    <div class="dev-avatar-ring">
-                        <span>👤</span>
+                    <div class="dev-tag" style="background: rgba(219, 39, 119, 0.1); color: #db2777; border-color: rgba(219, 39, 119, 0.25);">Developer</div>
+                    <div class="dev-avatar-ring" style="background: linear-gradient(135deg, #fce7f3 0%, #ffffff 100%); color: #db2777; border-color: #fbcfe8;">
+                        <span>L</span>
                     </div>
-                    <h3 class="dev-name">Member 2</h3>
-                    <div class="dev-role">Developer / Contributor</div>
-                    <div class="dev-placeholder-pill">• Name Details Pending •</div>
-                    <div class="dev-placeholder-pill">• Module / Role Pending •</div>
+                    <h3 class="dev-name">Labangi</h3>
+                    <div class="dev-role" style="margin-bottom: 0;">Developer</div>
                 </div>
 
-                <!-- Member 3 Blank Card -->
+                <!-- Member 3: Saineha -->
                 <div class="dev-profile-card">
-                    <div class="dev-tag">Team Member 03</div>
-                    <div class="dev-avatar-ring">
-                        <span>👤</span>
+                    <div class="dev-tag" style="background: rgba(2, 132, 199, 0.1); color: #0284c7; border-color: rgba(2, 132, 199, 0.25);">Developer</div>
+                    <div class="dev-avatar-ring" style="background: linear-gradient(135deg, #e0f2fe 0%, #ffffff 100%); color: #0284c7; border-color: #bae6fd;">
+                        <span>S</span>
                     </div>
-                    <h3 class="dev-name">Member 3</h3>
-                    <div class="dev-role">Developer / Contributor</div>
-                    <div class="dev-placeholder-pill">• Name Details Pending •</div>
-                    <div class="dev-placeholder-pill">• Module / Role Pending •</div>
+                    <h3 class="dev-name">Saineha</h3>
+                    <div class="dev-role" style="margin-bottom: 0;">Developer</div>
                 </div>
 
-                <!-- Member 4 Blank Card -->
+                <!-- Member 4: Saran -->
                 <div class="dev-profile-card">
-                    <div class="dev-tag">Team Member 04</div>
-                    <div class="dev-avatar-ring">
-                        <span>👤</span>
+                    <div class="dev-tag" style="background: rgba(5, 150, 105, 0.1); color: #059669; border-color: rgba(5, 150, 105, 0.25);">Developer</div>
+                    <div class="dev-avatar-ring" style="background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%); color: #059669; border-color: #d1fae5;">
+                        <span>S</span>
                     </div>
-                    <h3 class="dev-name">Member 4</h3>
-                    <div class="dev-role">Developer / Contributor</div>
-                    <div class="dev-placeholder-pill">• Name Details Pending •</div>
-                    <div class="dev-placeholder-pill">• Module / Role Pending •</div>
+                    <h3 class="dev-name">Saran</h3>
+                    <div class="dev-role" style="margin-bottom: 0;">Developer</div>
                 </div>
             </div>
         </section>
