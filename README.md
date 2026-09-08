@@ -10,25 +10,6 @@ An enterprise-grade, machine learning-powered academic analytics platform design
 
 ---
 
-## 📸 Screenshots
-
-### 1. Landing Page
-![Homepage](docs/demo/homepage.png)
-
-### 2. About Us Platform Architecture
-![About Us](docs/demo/about_page.png)
-
-### 3. Student Portal & Habit Tracking
-![Student Dashboard](docs/demo/student_dashboard.png)
-
-### 4. Student Performance Journey
-![Student Progress](docs/demo/student_progress.png)
-
-### 5. Institutional Leadership Dashboard
-![Admin Dashboard](docs/demo/admin_dashboard.png)
-
----
-
 ## 📁 Clean & Modular Project Structure
 
 ```
