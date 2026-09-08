@@ -10,6 +10,18 @@
     <meta name="color-scheme" content="light">
     <title>Performance Journey - StudyTrack AI</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <script>
+        (function() {
+            try {
+                var u = JSON.parse(localStorage.getItem('user') || '{}');
+                if (!u.student_id && !u.user_id) {
+                    window.location.replace('/login');
+                }
+            } catch(e) {
+                window.location.replace('/login');
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>

@@ -10,6 +10,18 @@
     <meta name="color-scheme" content="light">
     <title>Institutional Dashboard - StudyTrack AI</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <script>
+        (function() {
+            try {
+                var u = JSON.parse(localStorage.getItem('user') || '{}');
+                if (!u.user_id || u.role !== 'admin') {
+                    window.location.replace('/login');
+                }
+            } catch(e) {
+                window.location.replace('/login');
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -413,117 +425,142 @@
             }
         }
 
-        async function loadAnalytics() {
-            try {
-                const res = await fetch('/api/admin/analytics?t=' + Date.now());
-                const data = await res.json();
+        function renderAnalytics(a) {
+            if (!a) return;
+            const total = a.total_students || 80001;
+            document.getElementById('kpiTotalStudents').textContent = Number(total).toLocaleString();
+            document.getElementById('kpiAvgRisk').textContent = ((a.avg_dropout_probability || 0.512) * 100).toFixed(1) + '%';
+            document.getElementById('kpiHighRisk').textContent = Number(a.high_priority_students || (a.risk_distribution && a.risk_distribution.High) || 35561).toLocaleString();
 
-                if (data.status === 'success') {
-                    const a = data.analytics;
-                    document.getElementById('kpiTotalStudents').textContent = (a.total_students || 80001).toLocaleString();
-                    document.getElementById('kpiAvgRisk').textContent = ((a.avg_dropout_probability || 0.512) * 100).toFixed(1) + '%';
-                    document.getElementById('kpiHighRisk').textContent = (a.high_priority_students || (a.risk_distribution && a.risk_distribution.High) || 35561).toLocaleString();
+            // Render Donut Chart
+            const riskCanvas = document.getElementById('riskDonutChart');
+            if (riskCanvas) {
+                const riskCtx = riskCanvas.getContext('2d');
+                if (donutChartInstance) donutChartInstance.destroy();
 
-                    // Render Donut Chart
-                    const riskCtx = document.getElementById('riskDonutChart').getContext('2d');
-                    if (donutChartInstance) donutChartInstance.destroy();
+                const high = (a.risk_distribution && a.risk_distribution.High) || 35561;
+                const low = (a.risk_distribution && a.risk_distribution.Low) || 32632;
+                const mod = (a.risk_distribution && a.risk_distribution.Moderate) || 11808;
 
-                    const high = (a.risk_distribution && a.risk_distribution.High) || 35561;
-                    const low = (a.risk_distribution && a.risk_distribution.Low) || 32632;
-                    const mod = (a.risk_distribution && a.risk_distribution.Moderate) || 11808;
-
-                    donutChartInstance = new Chart(riskCtx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['High', 'Low', 'Moderate'],
-                            datasets: [{
-                                data: [high, low, mod],
-                                backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
-                                borderWidth: 2,
-                                borderColor: '#ffffff'
-                            }]
+                donutChartInstance = new Chart(riskCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['High', 'Low', 'Moderate'],
+                        datasets: [{
+                            data: [high, low, mod],
+                            backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: { duration: 350 },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#64748b', boxWidth: 12, font: { family: 'Plus Jakarta Sans', size: 12 } }
+                            }
                         },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: { color: '#64748b', boxWidth: 12, font: { family: 'Plus Jakarta Sans', size: 12 } }
-                                }
-                            },
-                            cutout: '65%'
-                        }
-                    });
+                        cutout: '65%'
+                    }
+                });
+            }
 
-                    // Render Bar Chart
-                    const clusterCtx = document.getElementById('clusterBarChart').getContext('2d');
-                    if (barChartInstance) barChartInstance.destroy();
+            // Render Bar Chart
+            const clusterCanvas = document.getElementById('clusterBarChart');
+            if (clusterCanvas) {
+                const clusterCtx = clusterCanvas.getContext('2d');
+                if (barChartInstance) barChartInstance.destroy();
 
-                    const clusters = a.cluster_distribution || { '0': 42800, '1': 3200, '3': 17000, '4': 17000 };
-                    barChartInstance = new Chart(clusterCtx, {
-                        type: 'bar',
-                        data: {
-                            labels: Object.keys(clusters).map(c => 'Cluster ' + c),
-                            datasets: [{
-                                label: 'Students',
-                                data: Object.values(clusters),
-                                backgroundColor: '#4f46e5',
-                                borderRadius: 6
-                            }]
+                const clusters = a.cluster_distribution || { '0': 42800, '1': 3200, '3': 17000, '4': 17000 };
+                barChartInstance = new Chart(clusterCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(clusters).map(c => 'Cluster ' + c),
+                        datasets: [{
+                            label: 'Students',
+                            data: Object.values(clusters),
+                            backgroundColor: '#4f46e5',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: { duration: 350 },
+                        plugins: {
+                            legend: { display: false }
                         },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false }
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: '#f1f5f9' },
+                                ticks: { color: '#64748b' }
                             },
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    grid: { color: '#f1f5f9' },
-                                    ticks: { color: '#64748b' }
-                                },
-                                x: {
-                                    grid: { display: false },
-                                    ticks: { color: '#64748b' }
-                                }
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#64748b' }
                             }
                         }
-                    });
+                    }
+                });
+            }
 
-                    // Render Detailed Breakdown Table
-                    const totalAll = (a.total_students || 80001);
-                    const breakdown = a.detailed_stats || [
-                        { risk: 'High', cluster: 0, avg_priority: 11.7, count: 1911 },
-                        { risk: 'High', cluster: 3, avg_priority: 12.0, count: 16966 },
-                        { risk: 'High', cluster: 4, avg_priority: 12.0, count: 17005 },
-                        { risk: 'Moderate', cluster: 0, avg_priority: 5.8, count: 11487 },
-                        { risk: 'Low', cluster: 0, avg_priority: 2.2, count: 29389 },
-                        { risk: 'Low', cluster: 1, avg_priority: 2.0, count: 3243 }
-                    ];
+            // Render Detailed Breakdown Table
+            const totalAll = total;
+            const breakdown = a.detailed_stats || [
+                { risk: 'High', cluster: 0, avg_priority: 11.7, count: 1911 },
+                { risk: 'High', cluster: 3, avg_priority: 12.0, count: 16966 },
+                { risk: 'High', cluster: 4, avg_priority: 12.0, count: 17005 },
+                { risk: 'Moderate', cluster: 0, avg_priority: 5.8, count: 11487 },
+                { risk: 'Low', cluster: 0, avg_priority: 2.2, count: 29389 },
+                { risk: 'Low', cluster: 1, avg_priority: 2.0, count: 3243 }
+            ];
 
-                    const tbody = document.getElementById('detailedBreakdownBody');
-                    tbody.innerHTML = breakdown.map(row => {
-                        const pct = ((row.count / totalAll) * 100).toFixed(1);
-                        const badgeClass = row.risk === 'High' ? 'badge-danger' : (row.risk === 'Moderate' ? 'badge-warning' : 'badge-success');
-                        return `
-                            <tr>
-                                <td><span class="badge ${badgeClass}">${row.risk.toUpperCase()}</span></td>
-                                <td style="font-weight:700; color:var(--text-primary);">Cluster ${row.cluster}</td>
-                                <td>${row.avg_priority}/15</td>
-                                <td style="font-weight:700; color:var(--text-primary);">${row.count.toLocaleString()}</td>
-                                <td>
-                                    <div style="display:flex; align-items:center; gap:0.75rem;">
-                                        <div class="progress-bar-container" style="flex:1;">
-                                            <div class="progress-bar-fill" style="width: ${Math.min(100, pct * 2.5)}%;"></div>
-                                        </div>
-                                        <span style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">${pct}%</span>
+            const tbody = document.getElementById('detailedBreakdownBody');
+            if (tbody) {
+                tbody.innerHTML = breakdown.map(row => {
+                    const pct = ((row.count / totalAll) * 100).toFixed(1);
+                    const badgeClass = row.risk === 'High' ? 'badge-danger' : (row.risk === 'Moderate' ? 'badge-warning' : 'badge-success');
+                    return `
+                        <tr>
+                            <td><span class="badge ${badgeClass}">${row.risk.toUpperCase()}</span></td>
+                            <td style="font-weight:700; color:var(--text-primary);">Cluster ${row.cluster}</td>
+                            <td>${row.avg_priority}/15</td>
+                            <td style="font-weight:700; color:var(--text-primary);">${Number(row.count).toLocaleString()}</td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:0.75rem;">
+                                    <div class="progress-bar-container" style="flex:1;">
+                                        <div class="progress-bar-fill" style="width: ${Math.min(100, pct * 2.5)}%;"></div>
                                     </div>
-                                </td>
-                            </tr>
-                        `;
-                    }).join('');
+                                    <span style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">${pct}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        async function loadAnalytics(forceFresh = false) {
+            try {
+                // Instant perception: load cached data synchronously
+                const cached = sessionStorage.getItem('admin_analytics_cache');
+                if (cached && !forceFresh) {
+                    try {
+                        renderAnalytics(JSON.parse(cached));
+                    } catch (err) {}
+                }
+
+                const url = forceFresh ? '/api/admin/analytics?refresh=1' : '/api/admin/analytics';
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data.status === 'success' && data.analytics) {
+                    renderAnalytics(data.analytics);
+                    sessionStorage.setItem('admin_analytics_cache', JSON.stringify(data.analytics));
                 }
             } catch (e) {
                 console.error('Failed to load analytics', e);
@@ -619,7 +656,8 @@
                 if (data.status === 'success') {
                     alert('AI models retrained successfully! Accuracy: ' + (data.metrics ? data.metrics.accuracy : '98.3%'));
                     status.textContent = 'Model Optimized & Ready';
-                    loadAnalytics();
+                    sessionStorage.removeItem('admin_analytics_cache');
+                    loadAnalytics(true);
                 } else {
                     alert('Retraining error: ' + data.message);
                     status.textContent = 'Optimization Error';

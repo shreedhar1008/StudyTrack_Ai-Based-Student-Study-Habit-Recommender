@@ -3,6 +3,14 @@ StudyTrack AI - Unified Database Adapter
 Supports both SQLite (Local Development) and PostgreSQL (Production / Neon.tech / Supabase).
 """
 
+import sys
+if sys.platform == 'win32':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 import os
 import sqlite3
 import threading
@@ -179,19 +187,21 @@ def get_db():
         p = get_pg_pool(db_url)
         try:
             conn = p.getconn()
-            if conn.closed:
-                clean_url = db_url.replace('&channel_binding=require', '').replace('?channel_binding=require', '')
-                conn = psycopg2.connect(
-                    clean_url,
-                    connect_timeout=10,
-                    keepalives=1,
-                    keepalives_idle=30,
-                    keepalives_interval=10,
-                    keepalives_count=5
-                )
+            if conn.closed != 0:
+                raise psycopg2.OperationalError("Connection is closed")
+            # Verify liveness (handles serverless idle disconnects like Neon)
+            with conn.cursor() as test_cur:
+                test_cur.execute("SELECT 1")
             return PostgresConnectionWrapper(conn, p)
         except Exception:
+            try:
+                if 'conn' in locals() and conn:
+                    p.putconn(conn, close=True)
+            except Exception:
+                pass
             clean_url = db_url.replace('&channel_binding=require', '').replace('?channel_binding=require', '')
+            if '?' not in clean_url and '&' in clean_url:
+                clean_url = clean_url.replace('&', '?', 1)
             conn = psycopg2.connect(
                 clean_url,
                 connect_timeout=10,
@@ -200,7 +210,7 @@ def get_db():
                 keepalives_interval=10,
                 keepalives_count=5
             )
-            return PostgresConnectionWrapper(conn, None)
+            return PostgresConnectionWrapper(conn, p)
     else:
         default_db = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'database', 'studytrack.db')
         if not os.path.exists(default_db) and os.path.exists('studytrack.db'):
@@ -393,6 +403,18 @@ def init_db():
         )
     """)
 
+    # 11. High Performance Indexes
+    try:
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_predictions_risk_cluster ON predictions(risk_level, cluster_number)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_predictions_priority ON predictions(priority_score)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_predictions_student ON predictions(student_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_students_user ON students(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_daily_habits_student_date ON daily_habits(student_id, log_date)")
+        conn.commit()
+    except Exception:
+        pass
+
     cursor.execute('SELECT COUNT(*) FROM users')
     count = cursor.fetchone()[0]
     if count == 0:
@@ -414,21 +436,6 @@ def init_db():
             VALUES (1, 2, 'John Doe', 20, 'Male', 'Computer Science', 2, 3.2)
         """)
         print("✅ Default users created successfully")
-
-    # Performance Indexes
-    indexes = [
-        "CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)",
-        "CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)",
-        "CREATE INDEX IF NOT EXISTS idx_students_user_id ON students(user_id)",
-        "CREATE INDEX IF NOT EXISTS idx_daily_habits_student_id ON daily_habits(student_id)",
-        "CREATE INDEX IF NOT EXISTS idx_predictions_student_id ON predictions(student_id)",
-        "CREATE INDEX IF NOT EXISTS idx_recommendations_daily_habit_id ON recommendations(daily_habit_id)"
-    ]
-    for idx_sql in indexes:
-        try:
-            cursor.execute(idx_sql)
-        except Exception:
-            pass
 
     conn.commit()
     conn.close()

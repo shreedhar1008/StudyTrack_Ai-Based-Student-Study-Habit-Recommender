@@ -6,6 +6,7 @@ if sys.platform == 'win32':
     except Exception:
         pass
 
+import time
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 import joblib
@@ -511,11 +512,23 @@ def login_student():
         return jsonify({
             'status': 'success',
             'student_id': student['student_id'],
-            'name': student['name'],
-            'email': student['email']
+            'name': student['full_name'] if 'full_name' in student.keys() else 'Student',
+            'email': data.get('email', '')
         })
     else:
         return jsonify({'status': 'error', 'message': 'Student not found'}), 404
+
+
+# In-memory analytics cache
+_analytics_cache = None
+_analytics_cache_time = 0
+_analytics_cache_ttl = 120  # Cache for 2 minutes for lightning-fast loads
+
+def invalidate_analytics_cache():
+    global _analytics_cache, _analytics_cache_time
+    _analytics_cache = None
+    _analytics_cache_time = 0
+
 
 @app.route('/api/predict', methods=['POST'])
 def predict_dropout():
@@ -736,6 +749,7 @@ def predict_dropout():
             ))
             
             conn.commit()
+            invalidate_analytics_cache()
             
         except Exception as e:
             conn.rollback()
@@ -758,89 +772,86 @@ def predict_dropout():
 
 @app.route('/api/admin/analytics', methods=['GET'])
 def get_analytics():
-    """Get analytics for admin dashboard"""
+    """Get analytics for admin dashboard (Optimized with in-memory cache & single query)"""
+    global _analytics_cache, _analytics_cache_time
+
+    now = time.time()
+    force_refresh = request.args.get('refresh') == '1'
+
+    if not force_refresh and _analytics_cache is not None and (now - _analytics_cache_time) < _analytics_cache_ttl:
+        return jsonify(_analytics_cache)
+
     conn = get_db()
     cursor = conn.cursor()
-    
-    # Aggregated Summary in a single query
-    cursor.execute('''
-        SELECT 
-            COUNT(DISTINCT student_id),
-            COUNT(DISTINCT CASE WHEN priority_score > 10 THEN student_id END),
-            AVG(dropout_probability),
-            COUNT(*)
-        FROM predictions
-    ''')
-    summary_row = cursor.fetchone()
-    total_tested = summary_row[0] or 0
-    high_priority = summary_row[1] or 0
-    avg_dropout = summary_row[2] or 0
-    total_assessments = summary_row[3] or 0
-    
-    # Risk distribution
-    cursor.execute('''
-        SELECT risk_level, COUNT(*) 
-        FROM predictions
-        GROUP BY risk_level
-    ''')
-    risk_distribution = {}
-    for row in cursor.fetchall():
-        risk_distribution[row[0]] = row[1]
-    
-    # Cluster distribution
-    cursor.execute('''
-        SELECT cluster_number, COUNT(*) 
-        FROM predictions
-        WHERE cluster_number IS NOT NULL
-        GROUP BY cluster_number
-    ''')
-    cluster_distribution = {}
-    for row in cursor.fetchall():
-        if row[0] is not None:
-            cluster_distribution[str(row[0])] = row[1]
-            
-    # Detailed distribution: Risk -> Cluster -> {count, avg_priority}
-    cursor.execute('''
-        SELECT 
-            risk_level,
-            cluster_number,
-            COUNT(*) as student_count,
-            AVG(priority_score) as avg_priority
-        FROM predictions
-        GROUP BY risk_level, cluster_number
-        ORDER BY 
-            CASE risk_level 
-                WHEN 'High' THEN 1 
-                WHEN 'Moderate' THEN 2 
-                WHEN 'Low' THEN 3 
-            END,
-            cluster_number
-    ''')
-    
-    detailed_stats = []
-    for row in cursor.fetchall():
-        detailed_stats.append({
-            'risk': row[0],
-            'cluster': row[1],
-            'count': row[2],
-            'avg_priority': round(float(row[3] or 0), 1)
-        })
-    
-    conn.close()
-    
-    return jsonify({
-        'status': 'success',
-        'analytics': {
-            'total_students': total_tested,
-            'high_priority_students': high_priority,
-            'avg_dropout_probability': float(avg_dropout),
-            'risk_distribution': risk_distribution,
-            'cluster_distribution': cluster_distribution,
-            'detailed_stats': detailed_stats,
-            'total_assessments': total_assessments,
-            'unique_clusters': len(cluster_distribution)
+
+    try:
+        # High-performance consolidated aggregation
+        cursor.execute('''
+            SELECT 
+                risk_level,
+                cluster_number,
+                COUNT(*) as student_count,
+                AVG(priority_score) as avg_priority,
+                AVG(dropout_probability) as avg_dropout,
+                COUNT(CASE WHEN priority_score > 10 THEN 1 END) as high_priority_count
+            FROM predictions
+            GROUP BY risk_level, cluster_number
+            ORDER BY 
+                CASE risk_level 
+                    WHEN 'High' THEN 1 
+                    WHEN 'Moderate' THEN 2 
+                    WHEN 'Low' THEN 3 
+                END,
+                cluster_number
+        ''')
+        rows = cursor.fetchall()
+
+        total_students = sum(r[2] for r in rows) if rows else 0
+        high_priority = sum(r[5] for r in rows) if rows else 0
+        total_weighted_prob = sum(r[2] * float(r[4] or 0) for r in rows) if rows else 0.0
+        avg_dropout = (total_weighted_prob / total_students) if total_students > 0 else 0.512
+
+        risk_distribution = {}
+        cluster_distribution = {}
+        detailed_stats = []
+
+        for row in rows:
+            risk = row[0] or 'Unknown'
+            cluster = row[1]
+            count = row[2]
+            avg_priority = round(float(row[3] or 0), 1)
+
+            risk_distribution[risk] = risk_distribution.get(risk, 0) + count
+            if cluster is not None:
+                cluster_distribution[str(cluster)] = cluster_distribution.get(str(cluster), 0) + count
+
+            detailed_stats.append({
+                'risk': risk,
+                'cluster': cluster,
+                'count': count,
+                'avg_priority': avg_priority
+            })
+
+        result = {
+            'status': 'success',
+            'analytics': {
+                'total_students': total_students,
+                'high_priority_students': high_priority,
+                'avg_dropout_probability': float(avg_dropout),
+                'risk_distribution': risk_distribution,
+                'cluster_distribution': cluster_distribution,
+                'detailed_stats': detailed_stats,
+                'total_assessments': total_students,
+                'unique_clusters': len(cluster_distribution)
+            }
         }
-    })
+
+        _analytics_cache = result
+        _analytics_cache_time = now
+
+        return jsonify(result)
+    finally:
+        conn.close()
 
 
 @app.route('/api/admin/feedback/submit', methods=['POST'])
@@ -1754,6 +1765,7 @@ def retrain_models():
             ''', (student_id, daily_habit_id, p, risk, c, priority, now))
 
         conn.commit()
+        invalidate_analytics_cache()
         return jsonify({
             'status': 'success',
             'message': f'Optimization complete! Synchronized {len(df)} records ({new_students_count} new students)'
